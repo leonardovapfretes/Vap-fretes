@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VapFretes</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VapFretes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1117">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;900&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d1117; --surface: #161b22; --card: #1c2333; --border: #30363d;
+  --orange: #f97316; --red: #ef4444; --green: #22c55e;
+  --blue: #3b82f6; --yellow: #eab308; --text: #e6edf3; --muted: #7d8590;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { background:var(--bg); color:var(--text); font-family:'Barlow',sans-serif; min-height:100vh; }
+
+/* LOGIN */
+#loginScreen {
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; padding:24px;
+  background: radial-gradient(ellipse at top, #1a0a00 0%, #0d1117 60%);
+}
+.login-logo {
+  font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:42px;
+  color:var(--orange); letter-spacing:2px; margin-bottom:6px;
+}
+.login-logo span { color:var(--text); }
+.login-sub { color:var(--muted); font-size:14px; margin-bottom:40px; }
+.login-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:28px; width:100%; max-width:380px;
+}
+.login-title { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:700; margin-bottom:20px; }
+.login-err { background:#4c0519; border:1px solid var(--red); border-radius:10px; padding:10px 14px; font-size:13px; color:var(--red); margin-bottom:14px; display:none; }
+
+/* APP */
+#appScreen { display:none; padding-bottom:70px; }
+header {
+  background:linear-gradient(135deg,#1a0a00,#0d1117);
+  border-bottom:2px solid var(--orange);
+  padding:14px 16px; display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:100;
+}
+.logo { font-family:'Barlow Condensed',sans-serif; font-weight:900; font-size:22px; color:var(--orange); }
+.logo span { color:var(--text); }
+.header-right { display:flex; align-items:center; gap:10px; }
+.user-badge {
+  font-size:11px; font-weight:700; padding:4px 10px; border-radius:10px;
+  background:var(--surface); border:1px solid var(--border);
+}
+.badge-gerente { color:var(--yellow); border-color:var(--yellow); }
+.badge-admin { color:var(--orange); border-color:var(--orange); }
+.badge-motorista { color:var(--green); border-color:var(--green); }
+.logout-btn {
+  background:none; border:1px solid var(--border); color:var(--muted);
+  border-radius:8px; padding:5px 10px; font-size:11px; cursor:pointer;
+  font-family:'Barlow',sans-serif;
+}
+
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0; background:var(--surface);
+  border-top:1px solid var(--border); display:flex; z-index:100;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.nav-btn {
+  flex:1; padding:10px 4px 8px; display:flex; flex-direction:column;
+  align-items:center; gap:3px; cursor:pointer; border:none; background:none;
+  color:var(--muted); font-family:'Barlow',sans-serif; font-size:10px; font-weight:600;
+}
+.nav-btn.active { color:var(--orange); }
+.nav-icon { font-size:20px; }
+
+main { padding:14px; max-width:600px; margin:0 auto; }
+.section { display:none; }
+.section.active { display:block; }
+
+/* CARDS */
+.card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px; }
+.card-title { font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; }
+.stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.stat-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; position:relative; overflow:hidden; }
+.stat-box::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.stat-box.orange::before { background:var(--orange); }
+.stat-box.green::before { background:var(--green); }
+.stat-box.blue::before { background:var(--blue); }
+.stat-box.yellow::before { background:var(--yellow); }
+.stat-label { font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:600; }
+.stat-value { font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:900; }
+.stat-value.orange{color:var(--orange)} .stat-value.green{color:var(--green)}
+.stat-value.blue{color:var(--blue)} .stat-value.yellow{color:var(--yellow)}
+
+.form-group { margin-bottom:12px; }
+label { font-size:12px; color:var(--muted); display:block; margin-bottom:5px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; }
+input,select,textarea {
+  width:100%; background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; padding:11px 14px; color:var(--text);
+  font-family:'Barlow',sans-serif; font-size:14px; outline:none; transition:border 0.2s;
+}
+input:focus,select:focus,textarea:focus { border-color:var(--orange); }
+textarea { resize:vertical; min-height:70px; }
+.row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+
+.btn { width:100%; padding:13px; border-radius:10px; border:none; font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:700; letter-spacing:0.5px; cursor:pointer; transition:all 0.2s; }
+.btn:active { transform:scale(0.98); opacity:0.8; }
+.btn-primary { background:linear-gradient(135deg,var(--orange),var(--red)); color:white; }
+.btn-blue { background:var(--blue); color:white; }
+.btn-green { background:var(--green); color:#000; }
+.btn-outline { background:transparent; border:1px solid var(--orange); color:var(--orange); margin-top:8px; }
+.btn-sm { padding:7px 14px; border-radius:8px; border:none; font-family:'Barlow',sans-serif; font-size:12px; font-weight:600; cursor:pointer; }
+.btn-sm-orange{background:var(--orange);color:white}
+.btn-sm-red{background:var(--red);color:white}
+.btn-sm-green{background:var(--green);color:#000}
+
+.orc-tabs { display:flex; gap:8px; margin-bottom:14px; }
+.orc-tab { flex:1; padding:10px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; text-align:center; transition:all 0.2s; font-family:'Barlow',sans-serif; }
+.orc-tab.active { background:var(--orange); color:white; border-color:var(--orange); }
+
+.result-box { background:linear-gradient(135deg,#1a0a00,#0d1117); border:1px solid var(--orange); border-radius:14px; padding:16px; margin-top:14px; }
+.result-title { font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; color:var(--orange); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+.result-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; }
+.result-row:last-child { border-bottom:none; }
+.result-label { color:var(--muted); }
+.result-val { font-weight:700; }
+
+.tratativa-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; }
+.trat-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+.trat-cliente { font-size:15px; font-weight:700; }
+.trat-motorista-tag { font-size:11px; color:var(--orange); font-weight:600; }
+.trat-valor { font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:900; color:var(--green); }
+.trat-info { font-size:12px; color:var(--muted); line-height:1.6; margin-bottom:10px; }
+.chance-bar { flex:1; height:6px; background:var(--border); border-radius:3px; margin:0 10px; overflow:hidden; }
+.chance-fill { height:100%; border-radius:3px; }
+.status-badge { font-size:10px; font-weight:700; padding:3px 8px; border-radius:8px; text-transform:uppercase; }
+.badge-andamento{background:#1e3a5f;color:var(--blue)}
+.badge-ganho{background:#14532d;color:var(--green)}
+.badge-perdido{background:#4c0519;color:var(--red)}
+.badge-pendente{background:#422006;color:var(--yellow)}
+
+.fin-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; }
+.fin-row:last-child { border-bottom:none; }
+.fin-label { color:var(--muted); }
+
+.chat-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px; min-height:220px; max-height:320px; overflow-y:auto; }
+.msg { margin-bottom:12px; animation:fadeUp 0.3s ease; }
+.msg-agent { display:flex; gap:8px; align-items:flex-start; }
+.msg-avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--orange),var(--red)); display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
+.msg-bubble { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px 13px; font-size:13px; line-height:1.6; max-width:88%; }
+.msg-user { display:flex; justify-content:flex-end; }
+.msg-user .msg-bubble { background:var(--orange); color:white; border:none; }
+.typing-dots { display:flex; gap:4px; align-items:center; }
+.dot { width:6px; height:6px; border-radius:50%; background:var(--orange); animation:bounce 1s infinite; }
+.dot:nth-child(2){animation-delay:.15s} .dot:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.chat-row { display:flex; gap:8px; }
+.chat-row input { flex:1; margin:0; }
+.send-btn { background:linear-gradient(135deg,var(--orange),var(--red)); border:none; border-radius:10px; padding:0 16px; color:white; font-size:16px; cursor:pointer; }
+
+.quick-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.quick-btn { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:10px; color:var(--text); font-size:12px; font-weight:600; cursor:pointer; font-family:'Barlow',sans-serif; text-align:left; transition:border-color 0.2s; }
+.quick-btn:hover { border-color:var(--orange); }
+
+.autocomplete-list { position:absolute; top:100%; left:0; right:0; z-index:200; background:var(--card); border:1px solid var(--orange); border-radius:10px; overflow:hidden; margin-top:4px; display:none; }
+.autocomplete-list.show { display:block; }
+.ac-item { padding:10px 14px; font-size:13px; cursor:pointer; border-bottom:1px solid var(--border); }
+.ac-item:last-child { border-bottom:none; }
+.ac-item:hover { background:var(--surface); color:var(--orange); }
+
+.user-row { display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border); }
+.user-row:last-child { border-bottom:none; }
+.user-name { font-size:14px; font-weight:600; }
+.user-email { font-size:11px; color:var(--muted); margin-top:2px; }
+.role-select { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:6px 10px; color:var(--text); font-size:12px; font-family:'Barlow',sans-serif; }
+
+.loading-screen { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:999; flex-direction:column; gap:14px; }
+.spinner { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--orange); border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loadingScreen">
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--orange)">VAP<span style="color:var(--text)">FRETES</span></div>
+  <div class="spinner"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" style="display:none">
+  <div class="login-logo">VAP<span>FRETES</span></div>
+  <div class="login-sub">🚚 Sistema de gestão de fretes</div>
+  <div class="login-card">
+    <div class="login-title">Entrar na sua conta</div>
+    <div class="login-err" id="loginErr"></div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="loginEmail" placeholder="seu@email.com">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="loginSenha" placeholder="••••••••" onkeydown="if(event.key==='Enter')fazerLogin()">
+    </div>
+    <button class="btn btn-primary" onclick="fazerLogin()" id="btnLogin">ENTRAR</button>
+    <button class="btn btn-outline" onclick="toggleCadastro()" id="btnToggle">Criar conta</button>
+    <div id="cadastroExtra" style="display:none;margin-top:12px">
+      <div class="form-group">
+        <label>Nome completo</label>
+        <input type="text" id="loginNome" placeholder="Seu nome">
+      </div>
+      <div style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px">
+        ⚠️ Novos usuários entram como <strong style="color:var(--green)">Motorista</strong>.<br>O gerente pode alterar o perfil depois.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appScreen">
+  <header>
+    <div class="logo">VAP<span>FRETES</span></div>
+    <div class="header-right">
+      <span class="user-badge" id="userBadge"></span>
+      <button class="logout-btn" onclick="fazerLogout()">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- DASHBOARD -->
+    <div class="section active" id="s-dashboard">
+      <div id="gerente-banner" style="display:none;background:linear-gradient(135deg,#1a0a00,#0d1117);border:1px solid var(--orange);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:13px">
+        👑 <strong style="color:var(--orange)">Visão Gerente</strong> — dados de todos os motoristas somados
+      </div>
+      <div class="stats-grid">
+        <div class="stat-box green"><div class="stat-label">💰 Faturamento</div><div class="stat-value green" id="d-fat">R$0</div></div>
+        <div class="stat-box orange"><div class="stat-label">📦 Lucro</div><div class="stat-value orange" id="d-luc">R$0</div></div>
+        <div class="stat-box blue"><div class="stat-label">🚚 Fretes</div><div class="stat-value blue" id="d-fretes">0</div></div>
+        <div class="stat-box yellow"><div class="stat-label">📋 Tratativas</div><div class="stat-value yellow" id="d-trat">0</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 Resumo Financeiro</div>
+        <div class="fin-row"><span class="fin-label">Total faturado</span><span style="font-weight:700" id="f-fat">R$0,00</span></div>
+        <div class="fin-row"><span class="fin-label">Combustível gasto</span><span style="font-weight:700;color:var(--red)" id="f-comb">R$0,00</span></div>
+        <div class="fin-row"><span class="fin-label">Outros custos</span><span style="font-weight:700;color:var(--yellow)" id="f-outros">R$0,00</span></div>
+        <div class="fin-row"><span class="fin-label" style="color:var(--text);font-weight:700">Lucro líquido</span><span style="font-weight:700;color:var(--green);font-size:16px" id="f-luc">R$0,00</span></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🎯 Próxima ação</div>
+        <div id="prox-acao" style="font-size:14px;line-height:1.7">🚚 <strong>Comece calculando</strong> seu primeiro orçamento na aba <strong>Calcular</strong>!</div>
+      </div>
+    </div>
+
+    <!-- CALCULAR -->
+    <div class="section" id="s-calcular">
+      <div class="orc-tabs">
+        <div class="orc-tab active" onclick="setOrcTipo('frete')">🚚 Frete</div>
+        <div class="orc-tab" onclick="setOrcTipo('compra')">🛒 Frete+Compra</div>
+        <div class="orc-tab" onclick="setOrcTipo('material')">🧱 Material</div>
+      </div>
+      <div class="card">
+        <div class="card-title">📍 Rota</div>
+        <div class="form-group">
+          <label>🔑 Chave ORS (openrouteservice.org — grátis)</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="orsKey" placeholder="Cole sua chave ORS..." style="flex:1">
+            <button class="btn-sm btn-sm-orange" onclick="salvarOrsKey()">Salvar</button>
+          </div>
+          <div id="ors-status" style="font-size:11px;margin-top:4px;color:var(--muted)">Cadastre grátis em openrouteservice.org → Dashboard → API Keys</div>
+        </div>
+        <div class="form-group">
+          <label>Ponto A (Origem)</label>
+          <div style="position:relative">
+            <input type="text" id="pontoA" placeholder="Ex: Rua das Flores, 100, São Paulo" oninput="acSearch('pontoA','listaA')" autocomplete="off">
+            <div id="listaA" class="autocomplete-list"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Ponto B (Destino)</label>
+          <div style="position:relative">
+            <input type="text" id="pontoB" placeholder="Ex: Av. Paulista, 500, São Paulo" oninput="acSearch('pontoB','listaB')" autocomplete="off">
+            <div id="listaB" class="autocomplete-list"></div>
+          </div>
+        </div>
+        <button class="btn btn-blue" id="btnDistancia" onclick="calcularDistancia()" style="margin-bottom:12px">📍 CALCULAR DISTÂNCIA</button>
+        <div id="rota-resultado" style="display:none;background:var(--surface);border:1px solid var(--orange);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px"></div>
+        <div class="row2">
+          <div class="form-group"><label>Distância (km)</label><input type="number" id="kmTotal" placeholder="Auto ou manual"></div>
+          <div class="form-group"><label>Consumo (km/L)</label><input type="number" id="consumo" value="10"></div>
+        </div>
+        <div class="row2">
+          <div class="form-group"><label>Gasolina (R$/L)</label><input type="number" id="precoComb" value="6.20"></div>
+          <div class="form-group"><label>Ida e volta?</label><select id="idaVolta"><option value="1">Só ida</option><option value="2">Ida e volta</option></select></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" id="servico-title">⚙️ Serviço</div>
+        <div class="row2">
+          <div class="form-group"><label>Tempo (horas)</label><input type="number" id="tempoH" placeholder="Ex: 2"></div>
+          <div class="form-group"><label>Valor hora (R$)</label><input type="number" id="valorHora" value="50"></div>
+        </div>
+        <div class="form-group" id="grupo-compra" style="display:none"><label>Valor compra p/ cliente (R$)</label><input type="number" id="valorCompra" placeholder="Ex: 850"></div>
+        <div class="form-group" id="grupo-material" style="display:none"><label>Valor do material (R$)</label><input type="number" id="valorMaterial" placeholder="Ex: 1200"></div>
+        <div class="form-group"><label>Lucro desejado (%)</label><input type="number" id="taxaLucro" value="20"></div>
+        <div class="form-group"><label>Observações</label><textarea id="obsOrc" placeholder="Ex: subir escada, material pesado..."></textarea></div>
+      </div>
+      <button class="btn btn-primary" onclick="calcular()">⚡ GERAR ORÇAMENTO</button>
+      <div id="resultado" style="display:none;margin-top:12px"></div>
+      <div id="btn-salvar-orc" style="display:none;margin-top:10px">
+        <button class="btn btn-outline" onclick="salvarComoTratativa()">💾 Salvar como Tratativa</button>
+      </div>
+    </div>
+
+    <!-- TRATATIVAS -->
+    <div class="section" id="s-tratativas">
+      <div class="card">
+        <div class="card-title">➕ Nova Tratativa</div>
+        <div class="form-group"><label>Cliente</label><input type="text" id="t-cliente" placeholder="Nome do cliente"></div>
+        <div class="row2">
+          <div class="form-group"><label>Valor (R$)</label><input type="number" id="t-valor" placeholder="350"></div>
+          <div class="form-group"><label>Tipo</label><select id="t-tipo"><option>Frete</option><option>Frete + Compra</option><option>Material + Entrega</option></select></div>
+        </div>
+        <div class="form-group"><label>Descrição</label><input type="text" id="t-desc" placeholder="Ex: Mudança + compra de prateleiras"></div>
+        <div class="row2">
+          <div class="form-group"><label>Chance (%)</label><input type="number" id="t-chance" value="50"></div>
+          <div class="form-group"><label>Status</label><select id="t-status"><option value="andamento">Em andamento</option><option value="pendente">Aguard. aprovação</option><option value="ganho">Ganho ✅</option><option value="perdido">Perdido ❌</option></select></div>
+        </div>
+        <button class="btn btn-primary" onclick="addTratativa()">Adicionar</button>
+      </div>
+      <div id="lista-tratativas"><div style="text-align:center;color:var(--muted);font-size:13px;padding:24px">Nenhuma tratativa ainda. 🚚</div></div>
+    </div>
+
+    <!-- FINANCEIRO -->
+    <div class="section" id="s-financeiro">
+      <div class="card">
+        <div class="card-title">➕ Registrar Serviço</div>
+        <div class="form-group"><label>Descrição</label><input type="text" id="fin-desc" placeholder="Ex: Frete mudança - João Silva"></div>
+        <div class="row3">
+          <div class="form-group"><label>Recebido</label><input type="number" id="fin-rec" placeholder="350"></div>
+          <div class="form-group"><label>Combustível</label><input type="number" id="fin-comb" placeholder="45"></div>
+          <div class="form-group"><label>Outros</label><input type="number" id="fin-outros" placeholder="0"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addServico()">Registrar</button>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 Histórico</div>
+        <div id="lista-servicos"><div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Nenhum serviço registrado.</div></div>
+      </div>
+    </div>
+
+    <!-- AGENTE -->
+    <div class="section" id="s-agente">
+      <div class="card">
+        <div class="card-title">🔑 Chave Claude API (console.anthropic.com)</div>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="claudeKey" placeholder="sk-ant-..." style="flex:1">
+          <button class="btn-sm btn-sm-orange" onclick="salvarClaudeKey()">Salvar</button>
+        </div>
+        <div id="claude-status" style="font-size:11px;margin-top:6px;color:var(--muted)">Necessário para o agente responder</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🤖 Agente VapFretes</div>
+        <div class="chat-box" id="chatBox"></div>
+        <div class="chat-row">
+          <input type="text" id="chatInput" placeholder="Pergunte qualquer coisa..." onkeydown="if(event.key==='Enter')sendMsg()">
+          <button class="send-btn" onclick="sendMsg()">➤</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚡ Perguntas rápidas</div>
+        <div class="quick-grid">
+          <button class="quick-btn" onclick="qMsg('Como precificar meu frete com lucro?')">💰 Precificar frete</button>
+          <button class="quick-btn" onclick="qMsg('Como negociar melhor com o cliente?')">🤝 Negociação</button>
+          <button class="quick-btn" onclick="qMsg('Como fazer compra pro cliente com segurança?')">🛒 Compra segura</button>
+          <button class="quick-btn" onclick="qMsg('Como conseguir mais clientes para frete?')">📣 Captar clientes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GERENCIAR (só gerente/admin) -->
+    <div class="section" id="s-gerenciar">
+      <div class="card">
+        <div class="card-title">👥 Usuários cadastrados</div>
+        <div id="lista-usuarios"><div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Carregando usuários...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 Tratativas — Todos os Motoristas</div>
+        <div id="lista-trat-todas"><div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Carregando...</div></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="bottom-nav" id="bottomNav"></div>
+</div>
+
+<script>
+// ===== SUPABASE =====
+const SUPA_URL = 'https://atptmrycmvpocllqwgzo.supabase.co';
+const SUPA_KEY = 'sb_publishable_aPK1_Jhh0hQQQbQ56UEwOw_wOEOjmQs';
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
+
+let currentUser = null;
+let currentProfile = null;
+
+// ===== INIT =====
+async function init() {
+  const { data: { session } } = await db.auth.getSession();
+  if (session) {
+    await carregarPerfil(session.user);
+  } else {
+    showLogin();
+  }
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) await carregarPerfil(session.user);
+    if (event === 'SIGNED_OUT') showLogin();
+  });
+}
+
+async function carregarPerfil(user) {
+  currentUser = user;
+  
+  // Tenta buscar perfil existente
+  let { data: profile, error } = await db.from('profiles').select('*').eq('id', user.id).single();
+  
+  if (!profile) {
+    // Cria perfil se não existe
+    const { error: insertError } = await db.from('profiles').insert({ 
+      id: user.id, 
+      email: user.email, 
+      nome: user.user_metadata?.nome || user.email.split('@')[0], 
+      role: 'motorista' 
+    });
+    
+    // Busca novamente após criar
+    const { data: newProfile } = await db.from('profiles').select('*').eq('id', user.id).single();
+    profile = newProfile;
+  }
+  
+  // Se ainda não tem perfil, cria um local temporário
+  if (!profile) {
+    profile = { 
+      id: user.id, 
+      email: user.email, 
+      nome: user.email.split('@')[0], 
+      role: 'motorista' 
+    };
+  }
+  
+  currentProfile = profile;
+  showApp();
+}
+
+function showLogin() {
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
+}
+
+function showApp() {
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'block';
+  setupUI();
+  carregarDados();
+}
+
+// ===== LOGIN =====
+let isCadastro = false;
+function toggleCadastro() {
+  isCadastro = !isCadastro;
+  document.getElementById('cadastroExtra').style.display = isCadastro ? 'block' : 'none';
+  document.getElementById('btnLogin').textContent = isCadastro ? 'CRIAR CONTA' : 'ENTRAR';
+  document.getElementById('btnToggle').textContent = isCadastro ? 'Já tenho conta' : 'Criar conta';
+}
+
+async function fazerLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const btn = document.getElementById('btnLogin');
+  const err = document.getElementById('loginErr');
+  err.style.display = 'none';
+  if (!email || !senha) { showErr('Preencha e-mail e senha!'); return; }
+  btn.textContent = '...'; btn.disabled = true;
+  if (isCadastro) {
+    const nome = document.getElementById('loginNome').value.trim() || email.split('@')[0];
+    const { error } = await db.auth.signUp({ email, password: senha, options: { data: { nome } } });
+    if (error) { showErr(error.message === 'User already registered' ? 'E-mail já cadastrado!' : error.message); }
+    else showErr('✅ Conta criada! Verifique seu e-mail para confirmar.', true);
+  } else {
+    const { error } = await db.auth.signInWithPassword({ email, password: senha });
+    if (error) showErr('E-mail ou senha incorretos!');
+  }
+  btn.textContent = isCadastro ? 'CRIAR CONTA' : 'ENTRAR'; btn.disabled = false;
+}
+
+function showErr(msg, success = false) {
+  const el = document.getElementById('loginErr');
+  el.textContent = msg; el.style.display = 'block';
+  el.style.background = success ? '#14532d' : '#4c0519';
+  el.style.color = success ? 'var(--green)' : 'var(--red)';
+  el.style.borderColor = success ? 'var(--green)' : 'var(--red)';
+}
+
+async function fazerLogout() {
+  await db.auth.signOut();
+}
+
+// ===== UI SETUP =====
+function setupUI() {
+  const role = currentProfile?.role || 'motorista';
+  const nome = currentProfile?.nome || 'Usuário';
+  const badgeEl = document.getElementById('userBadge');
+  const labels = { gerente: '👑 Gerente', admin: '⚙️ Admin', motorista: '🚚 ' + nome };
+  const classes = { gerente: 'badge-gerente', admin: 'badge-admin', motorista: 'badge-motorista' };
+  badgeEl.textContent = labels[role] || '🚚 ' + nome;
+  badgeEl.className = 'user-badge ' + (classes[role] || 'badge-motorista');
+
+  const isGerente = role === 'gerente' || role === 'admin';
+  if (isGerente) document.getElementById('gerente-banner').style.display = 'block';
+
+  const tabs = [
+    { id: 'dashboard', icon: '📊', label: 'Dashboard' },
+    { id: 'calcular', icon: '⚡', label: 'Calcular' },
+    { id: 'tratativas', icon: '📋', label: 'Tratativas' },
+    { id: 'financeiro', icon: '💰', label: 'Financeiro' },
+    { id: 'agente', icon: '🤖', label: 'Agente' },
+  ];
+  if (isGerente) tabs.push({ id: 'gerenciar', icon: '👥', label: 'Equipe' });
+
+  const nav = document.getElementById('bottomNav');
+  nav.innerHTML = tabs.map(t => `<button class="nav-btn ${t.id==='dashboard'?'active':''}" onclick="showTab('${t.id}')"><div class="nav-icon">${t.icon}</div>${t.label}</button>`).join('');
+
+  // Carregar chaves salvas
+  const orsKey = localStorage.getItem('orsKey');
+  if (orsKey) { document.getElementById('orsKey').value = orsKey; atualizaOrsStatus(true); }
+  const cKey = localStorage.getItem('claudeKey');
+  if (cKey) { document.getElementById('claudeKey').value = cKey; claudeApiKey = cKey; atualizaClaudeStatus(true); }
+
+  setTimeout(() => addMsgUI('👋 Olá, ' + (currentProfile?.nome || '') + '! Sou seu agente VapFretes. Como posso ajudar?', false), 400);
+}
+
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => { if (b.getAttribute('onclick')?.includes(id)) b.classList.add('active'); });
+  if (id === 'gerenciar') carregarUsuarios();
+}
+
+// ===== DADOS =====
+async function carregarDados() {
+  const role = currentProfile?.role;
+  const isGerente = role === 'gerente' || role === 'admin';
+  let servQuery = db.from('servicos').select('*');
+  let tratQuery = db.from('tratativas').select('*');
+  if (!isGerente) {
+    servQuery = servQuery.eq('user_id', currentUser.id);
+    tratQuery = tratQuery.eq('user_id', currentUser.id);
+  }
+  const { data: servicos } = await servQuery.order('created_at', { ascending: false });
+  const { data: tratativas } = await tratQuery.order('created_at', { ascending: false });
+  renderDashboard(servicos || [], tratativas || []);
+  renderServicos(servicos || []);
+  renderTratativas(tratativas || []);
+}
+
+function renderDashboard(servicos, tratativas) {
+  const fat = servicos.reduce((a, s) => a + (s.recebido || 0), 0);
+  const comb = servicos.reduce((a, s) => a + (s.combustivel || 0), 0);
+  const outros = servicos.reduce((a, s) => a + (s.outros || 0), 0);
+  const luc = fat - comb - outros;
+  const emTrat = tratativas.filter(t => t.status === 'andamento' || t.status === 'pendente').length;
+  document.getElementById('d-fat').textContent = 'R$' + fat.toFixed(0);
+  document.getElementById('d-luc').textContent = 'R$' + luc.toFixed(0);
+  document.getElementById('d-fretes').textContent = servicos.length;
+  document.getElementById('d-trat').textContent = emTrat;
+  document.getElementById('f-fat').textContent = 'R$' + fat.toFixed(2);
+  document.getElementById('f-comb').textContent = 'R$' + comb.toFixed(2);
+  document.getElementById('f-outros').textContent = 'R$' + outros.toFixed(2);
+  document.getElementById('f-luc').textContent = 'R$' + luc.toFixed(2);
+}
+
+// ===== TRATATIVAS =====
+async function addTratativa() {
+  const cliente = document.getElementById('t-cliente').value.trim();
+  if (!cliente) { alert('Informe o cliente!'); return; }
+  const { error } = await db.from('tratativas').insert({
+    user_id: currentUser.id,
+    cliente,
+    valor: parseFloat(document.getElementById('t-valor').value) || 0,
+    tipo: document.getElementById('t-tipo').value,
+    descricao: document.getElementById('t-desc').value,
+    chance: parseInt(document.getElementById('t-chance').value) || 50,
+    status: document.getElementById('t-status').value,
+  });
+  if (!error) {
+    document.getElementById('t-cliente').value = '';
+    document.getElementById('t-valor').value = '';
+    document.getElementById('t-desc').value = '';
+    carregarDados();
+  }
+}
+
+function renderTratativas(tratativas) {
+  const el = document.getElementById('lista-tratativas');
+  if (!tratativas.length) { el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:24px">Nenhuma tratativa ainda.</div>'; return; }
+  el.innerHTML = tratativas.map(t => {
+    const cor = t.chance >= 70 ? '#22c55e' : t.chance >= 40 ? '#eab308' : '#ef4444';
+    const badgeClass = { andamento: 'badge-andamento', ganho: 'badge-ganho', perdido: 'badge-perdido', pendente: 'badge-pendente' }[t.status] || 'badge-andamento';
+    const badgeText = { andamento: '🔄 Andamento', ganho: '✅ Ganho', perdido: '❌ Perdido', pendente: '⏳ Pendente' }[t.status] || t.status;
+    return `
+    <div class="tratativa-card">
+      <div class="trat-header">
+        <div><div class="trat-cliente">${t.cliente}</div><div style="font-size:11px;color:var(--muted)">${t.tipo || 'Frete'}</div></div>
+        <div style="text-align:right"><div class="trat-valor">R$${(t.valor||0).toFixed(0)}</div><span class="status-badge ${badgeClass}">${badgeText}</span></div>
+      </div>
+      <div class="trat-info">${t.descricao || ''}</div>
+      <div style="display:flex;align-items:center">
+        <div style="font-size:11px;color:var(--muted)">Chance</div>
+        <div class="chance-bar"><div class="chance-fill" style="width:${t.chance}%;background:${cor}"></div></div>
+        <div style="font-size:11px;font-weight:700;color:${cor}">${t.chance}%</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn-sm btn-sm-green" onclick="mudaStatusTrat('${t.id}','ganho')">✅ Ganho</button>
+        <button class="btn-sm btn-sm-red" onclick="mudaStatusTrat('${t.id}','perdido')">❌ Perdido</button>
+        <button class="btn-sm" style="background:var(--border);color:var(--muted)" onclick="delTratativa('${t.id}')">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function mudaStatusTrat(id, status) {
+  await db.from('tratativas').update({ status }).eq('id', id);
+  carregarDados();
+}
+async function delTratativa(id) {
+  await db.from('tratativas').delete().eq('id', id);
+  carregarDados();
+}
+
+// ===== FINANCEIRO =====
+async function addServico() {
+  const desc = document.getElementById('fin-desc').value.trim();
+  if (!desc) { alert('Informe a descrição!'); return; }
+  const { error } = await db.from('servicos').insert({
+    user_id: currentUser.id,
+    descricao: desc,
+    recebido: parseFloat(document.getElementById('fin-rec').value) || 0,
+    combustivel: parseFloat(document.getElementById('fin-comb').value) || 0,
+    outros: parseFloat(document.getElementById('fin-outros').value) || 0,
+  });
+  if (!error) {
+    document.getElementById('fin-desc').value = '';
+    document.getElementById('fin-rec').value = '';
+    document.getElementById('fin-comb').value = '';
+    document.getElementById('fin-outros').value = '';
+    carregarDados();
+  }
+}
+
+function renderServicos(servicos) {
+  const el = document.getElementById('lista-servicos');
+  if (!servicos.length) { el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Nenhum serviço registrado.</div>'; return; }
+  el.innerHTML = servicos.map(s => {
+    const lucro = (s.recebido || 0) - (s.combustivel || 0) - (s.outros || 0);
+    const data = new Date(s.created_at).toLocaleDateString('pt-BR');
+    return `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div><div style="font-size:14px;font-weight:600">${s.descricao}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${data} · Comb: R$${(s.combustivel||0).toFixed(0)}</div></div>
+        <div style="text-align:right"><div style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:var(--green)">+R$${lucro.toFixed(0)}</div><div style="font-size:11px;color:var(--muted)">de R$${(s.recebido||0).toFixed(0)}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===== GERENCIAR EQUIPE =====
+async function carregarUsuarios() {
+  const { data: users } = await db.from('profiles').select('*').order('created_at');
+  const elUsers = document.getElementById('lista-usuarios');
+  if (!users?.length) { elUsers.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Nenhum usuário ainda.</div>'; return; }
+  elUsers.innerHTML = users.map(u => `
+    <div class="user-row">
+      <div><div class="user-name">${u.nome || u.email}</div><div class="user-email">${u.email}</div></div>
+      <select class="role-select" onchange="alterarRole('${u.id}',this.value)">
+        <option value="motorista" ${u.role==='motorista'?'selected':''}>🚚 Motorista</option>
+        <option value="admin" ${u.role==='admin'?'selected':''}>⚙️ Admin</option>
+        <option value="gerente" ${u.role==='gerente'?'selected':''}>👑 Gerente</option>
+      </select>
+    </div>`).join('');
+
+  const { data: todasTrat } = await db.from('tratativas').select('*, profiles(nome)').order('created_at', { ascending: false });
+  const elTrat = document.getElementById('lista-trat-todas');
+  if (!todasTrat?.length) { elTrat.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Nenhuma tratativa.</div>'; return; }
+  elTrat.innerHTML = todasTrat.map(t => {
+    const cor = t.chance >= 70 ? '#22c55e' : t.chance >= 40 ? '#eab308' : '#ef4444';
+    return `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between">
+        <div><div style="font-size:14px;font-weight:700">${t.cliente}</div><div style="font-size:11px;color:var(--orange)">🚚 ${t.profiles?.nome || 'Motorista'}</div></div>
+        <div style="text-align:right"><div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;color:var(--green)">R$${(t.valor||0).toFixed(0)}</div><div style="font-size:11px;color:${cor}">${t.chance}% chance</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function alterarRole(userId, role) {
+  await db.from('profiles').update({ role }).eq('id', userId);
+}
+
+// ===== CALCULAR =====
+let orcTipo = 'frete';
+function setOrcTipo(tipo) {
+  orcTipo = tipo;
+  document.querySelectorAll('.orc-tab').forEach((t, i) => t.classList.toggle('active', ['frete','compra','material'][i] === tipo));
+  document.getElementById('grupo-compra').style.display = tipo === 'compra' ? 'block' : 'none';
+  document.getElementById('grupo-material').style.display = tipo === 'material' ? 'block' : 'none';
+  const titles = { frete:'⚙️ Detalhes do Frete', compra:'🛒 Frete + Compra p/ Cliente', material:'🧱 Material + Entrega' };
+  document.getElementById('servico-title').textContent = titles[tipo];
+}
+
+let ultimoCalculo = null;
+function calcular() {
+  const km = parseFloat(document.getElementById('kmTotal').value) || 0;
+  if (!km) { alert('Informe a distância em km ou calcule automaticamente!'); return; }
+  const consumo = parseFloat(document.getElementById('consumo').value) || 10;
+  const precoComb = parseFloat(document.getElementById('precoComb').value) || 6.20;
+  const mult = parseInt(document.getElementById('idaVolta').value) || 1;
+  const tempo = parseFloat(document.getElementById('tempoH').value) || 0;
+  const valorHora = parseFloat(document.getElementById('valorHora').value) || 50;
+  const taxaLucro = parseFloat(document.getElementById('taxaLucro').value) || 20;
+  const valorCompra = parseFloat(document.getElementById('valorCompra').value) || 0;
+  const valorMaterial = parseFloat(document.getElementById('valorMaterial').value) || 0;
+  const pontoA = document.getElementById('pontoA').value || 'Origem';
+  const pontoB = document.getElementById('pontoB').value || 'Destino';
+  const kmTotal = km * mult;
+  const litros = kmTotal / consumo;
+  const custoComb = litros * precoComb;
+  const custoMdo = tempo * valorHora;
+  const custoBase = custoComb + custoMdo + valorCompra + valorMaterial;
+  const lucro = custoBase * (taxaLucro / 100);
+  const total = custoBase + lucro;
+  const orc1 = total * 0.85, orc2 = total, orc3 = total * 1.20;
+  ultimoCalculo = { pontoA, pontoB, kmTotal, custoComb, custoMdo, valorCompra, valorMaterial, custoBase, lucro, total, orc1, orc2, orc3, orcTipo, litros, tempo, valorHora, taxaLucro };
+  const tipos = { frete:'Frete', compra:'Frete + Compra', material:'Material + Entrega' };
+  document.getElementById('resultado').style.display = 'block';
+  document.getElementById('btn-salvar-orc').style.display = 'block';
+  document.getElementById('resultado').innerHTML = `
+    <div class="result-box">
+      <div class="result-title">📍 ${pontoA.split(',')[0]} → ${pontoB.split(',')[0]}</div>
+      <div class="result-row"><span class="result-label">Tipo</span><span class="result-val">${tipos[orcTipo]}</span></div>
+      <div class="result-row"><span class="result-label">Distância total</span><span class="result-val">${kmTotal} km</span></div>
+      <div class="result-row"><span class="result-label">Combustível (${litros.toFixed(1)}L)</span><span class="result-val" style="color:var(--red)">R$${custoComb.toFixed(2)}</span></div>
+      ${tempo ? `<div class="result-row"><span class="result-label">Mão de obra (${tempo}h)</span><span class="result-val" style="color:var(--blue)">R$${custoMdo.toFixed(2)}</span></div>` : ''}
+      ${valorCompra ? `<div class="result-row"><span class="result-label">Compra p/ cliente</span><span class="result-val" style="color:var(--yellow)">R$${valorCompra.toFixed(2)}</span></div>` : ''}
+      ${valorMaterial ? `<div class="result-row"><span class="result-label">Material</span><span class="result-val" style="color:var(--yellow)">R$${valorMaterial.toFixed(2)}</span></div>` : ''}
+      <div class="result-row"><span class="result-label">Custo total</span><span class="result-val">R$${custoBase.toFixed(2)}</span></div>
+      <div class="result-row"><span class="result-label">Lucro (${taxaLucro}%)</span><span class="result-val" style="color:var(--green)">R$${lucro.toFixed(2)}</span></div>
+      <div style="margin:14px 0 8px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px">3 Opções de Preço</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">ECONÔMICO</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--blue)">R$${orc1.toFixed(0)}</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#1a0a00,#0d1117);border:2px solid var(--orange);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--orange);font-weight:700;margin-bottom:4px">✅ IDEAL</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--orange)">R$${orc2.toFixed(0)}</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">PREMIUM</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--green)">R$${orc3.toFixed(0)}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function salvarComoTratativa() {
+  if (!ultimoCalculo) return;
+  const c = ultimoCalculo;
+  const tipos = { frete:'Frete', compra:'Frete + Compra', material:'Material + Entrega' };
+  await db.from('tratativas').insert({
+    user_id: currentUser.id,
+    cliente: 'Cliente - ' + c.pontoB.split(',')[0],
+    valor: c.orc2,
+    tipo: tipos[c.orcTipo],
+    descricao: `${c.pontoA.split(',')[0]} → ${c.pontoB.split(',')[0]} (${c.kmTotal}km)`,
+    chance: 60,
+    status: 'andamento',
+  });
+  carregarDados();
+  showTab('tratativas');
+}
+
+// ===== ORS =====
+let orsApiKey = '';
+let coordA = null, coordB = null, acTimers = {};
+
+function salvarOrsKey() {
+  const k = document.getElementById('orsKey').value.trim();
+  if (!k) { alert('Cole sua chave ORS!'); return; }
+  orsApiKey = k; localStorage.setItem('orsKey', k); atualizaOrsStatus(true);
+}
+function atualizaOrsStatus(ok) {
+  const el = document.getElementById('ors-status');
+  el.textContent = ok ? '✅ Chave ativa — distância automática disponível!' : 'Cadastre grátis em openrouteservice.org';
+  el.style.color = ok ? 'var(--green)' : 'var(--muted)';
+}
+
+async function acSearch(inputId, listaId) {
+  const val = document.getElementById(inputId).value;
+  const lista = document.getElementById(listaId);
+  if (!orsApiKey || val.length < 4) { lista.classList.remove('show'); return; }
+  clearTimeout(acTimers[inputId]);
+  acTimers[inputId] = setTimeout(async () => {
+    try {
+      const res = await fetch(`https://api.openrouteservice.org/geocode/autocomplete?api_key=${orsApiKey}&text=${encodeURIComponent(val)}&boundary.country=BR&size=5`);
+      const data = await res.json();
+      if (!data.features?.length) { lista.classList.remove('show'); return; }
+      lista.innerHTML = data.features.map(f => {
+        const label = f.properties.label;
+        const coords = f.geometry.coordinates;
+        return `<div class="ac-item" onclick="selectLocal('${inputId}','${listaId}','${label.replace(/'/g,"\\'")}','${coords[0]}','${coords[1]}')">${label}</div>`;
+      }).join('');
+      lista.classList.add('show');
+    } catch(e) { lista.classList.remove('show'); }
+  }, 400);
+}
+
+function selectLocal(inputId, listaId, label, lng, lat) {
+  document.getElementById(inputId).value = label;
+  document.getElementById(listaId).classList.remove('show');
+  if (inputId === 'pontoA') coordA = [parseFloat(lng), parseFloat(lat)];
+  if (inputId === 'pontoB') coordB = [parseFloat(lng), parseFloat(lat)];
+}
+
+async function geocodificar(texto) {
+  const res = await fetch(`https://api.openrouteservice.org/geocode/search?api_key=${orsApiKey}&text=${encodeURIComponent(texto)}&boundary.country=BR&size=1`);
+  const data = await res.json();
+  if (!data.features?.length) throw new Error('Não encontrado');
+  return data.features[0].geometry.coordinates;
+}
+
+async function calcularDistancia() {
+  if (!orsApiKey) { alert('Insira sua chave ORS e salve!'); return; }
+  const tA = document.getElementById('pontoA').value.trim();
+  const tB = document.getElementById('pontoB').value.trim();
+  if (!tA || !tB) { alert('Preencha os dois endereços!'); return; }
+  const btn = document.getElementById('btnDistancia');
+  btn.textContent = '⏳ Calculando...'; btn.disabled = true;
+  const res = document.getElementById('rota-resultado');
+  try {
+    if (!coordA) coordA = await geocodificar(tA);
+    if (!coordB) coordB = await geocodificar(tB);
+    const r = await fetch(`https://api.openrouteservice.org/v2/directions/driving-car?api_key=${orsApiKey}&start=${coordA[0]},${coordA[1]}&end=${coordB[0]},${coordB[1]}`);
+    const d = await r.json();
+    const seg = d.features[0].properties.segments[0];
+    const km = (seg.distance / 1000).toFixed(1);
+    const min = Math.round(seg.duration / 60);
+    const tempo = min >= 60 ? `${Math.floor(min/60)}h${min%60>0?min%60+'min':''}` : `${min} min`;
+    document.getElementById('kmTotal').value = km;
+    res.style.display = 'block';
+    res.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700;color:var(--orange)">📍 Rota calculada!</div><div style="color:var(--muted);font-size:12px;margin-top:3px">${tA.split(',')[0]} → ${tB.split(',')[0]}</div></div><div style="text-align:right"><div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900">${km} km</div><div style="font-size:12px;color:var(--muted)">⏱️ ~${tempo}</div></div></div>`;
+    coordA = null; coordB = null;
+  } catch(e) {
+    res.style.display = 'block';
+    res.innerHTML = '<div style="color:var(--red)">⚠️ Não foi possível calcular. Verifique os endereços ou a chave ORS.</div>';
+  }
+  btn.textContent = '📍 CALCULAR DISTÂNCIA'; btn.disabled = false;
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#pontoA') && !e.target.closest('#listaA')) document.getElementById('listaA')?.classList.remove('show');
+  if (!e.target.closest('#pontoB') && !e.target.closest('#listaB')) document.getElementById('listaB')?.classList.remove('show');
+});
+
+// ===== AGENTE =====
+let claudeApiKey = '';
+let chatHistory = [];
+
+function salvarClaudeKey() {
+  const k = document.getElementById('claudeKey').value.trim();
+  if (!k) return;
+  claudeApiKey = k; localStorage.setItem('claudeKey', k); atualizaClaudeStatus(true);
+}
+function atualizaClaudeStatus(ok) {
+  const el = document.getElementById('claude-status');
+  el.textContent = ok ? '✅ Agente ativo!' : 'Necessário para o agente responder';
+  el.style.color = ok ? 'var(--green)' : 'var(--muted)';
+}
+
+const systemPrompt = `Você é o agente VapFretes, especialista em fretes pequenos e serviços de compra e entrega no Brasil. Responda de forma direta e prática, máximo 3 parágrafos. Use emojis. Fale em português brasileiro informal.`;
+
+function addMsgUI(text, isUser) {
+  const box = document.getElementById('chatBox');
+  const div = document.createElement('div');
+  div.className = `msg ${isUser ? 'msg-user' : 'msg-agent'}`;
+  div.innerHTML = isUser ? `<div class="msg-bubble">${text}</div>` : `<div class="msg-avatar">🚚</div><div class="msg-bubble">${text}</div>`;
+  box.appendChild(div); box.scrollTop = box.scrollHeight;
+}
+
+async function sendMsg() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim(); if (!text) return;
+  if (!claudeApiKey) { addMsgUI('⚠️ Insira sua chave Claude API acima para ativar o agente!', false); return; }
+  input.value = ''; addMsgUI(text, true);
+  chatHistory.push({ role: 'user', content: text });
+  const box = document.getElementById('chatBox');
+  const typing = document.createElement('div');
+  typing.id = 'typing'; typing.className = 'msg msg-agent';
+  typing.innerHTML = `<div class="msg-avatar">🚚</div><div class="msg-bubble"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  box.appendChild(typing); box.scrollTop = box.scrollHeight;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': claudeApiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: systemPrompt, messages: chatHistory })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Desculpe, tente novamente.';
+    document.getElementById('typing')?.remove();
+    addMsgUI(reply, false);
+    chatHistory.push({ role: 'assistant', content: reply });
+  } catch(e) {
+    document.getElementById('typing')?.remove();
+    addMsgUI('⚠️ Erro de conexão. Verifique sua chave Claude API.', false);
+  }
+}
+
+function qMsg(text) { showTab('agente'); document.getElementById('chatInput').value = text; sendMsg(); }
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>
