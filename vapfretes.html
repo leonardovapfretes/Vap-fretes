@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VapFretes</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VapFretes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1117">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;900&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1117;--surface:#161b22;--card:#1c2333;--border:#30363d;--orange:#f97316;--red:#ef4444;--green:#22c55e;--blue:#3b82f6;--yellow:#eab308;--text:#e6edf3;--muted:#7d8590;--purple:#a855f7}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh}
+#loginScreen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at top,#1a0a00 0%,#0d1117 60%)}
+.login-logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:42px;color:var(--orange);letter-spacing:2px;margin-bottom:6px}
+.login-logo span{color:var(--text)}
+.login-sub{color:var(--muted);font-size:14px;margin-bottom:40px}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px;width:100%;max-width:380px}
+.login-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;margin-bottom:20px}
+.login-err{border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+#appScreen{display:none;padding-bottom:72px}
+header{background:linear-gradient(135deg,#1a0a00,#0d1117);border-bottom:2px solid var(--orange);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:var(--orange)}
+.logo span{color:var(--text)}
+.user-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;background:var(--surface);border:1px solid var(--border)}
+.badge-gerente{color:var(--yellow);border-color:var(--yellow)}
+.badge-admin{color:var(--orange);border-color:var(--orange)}
+.badge-motorista{color:var(--green);border-color:var(--green)}
+.badge-premium{color:var(--purple);border-color:var(--purple)}
+.logout-btn{background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Barlow',sans-serif}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;padding:10px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;border:none;background:none;color:var(--muted);font-family:'Barlow',sans-serif;font-size:9px;font-weight:600}
+.nav-btn.active{color:var(--orange)}
+.nav-icon{font-size:18px}
+main{padding:14px;max-width:600px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
+.card-title{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;position:relative;overflow:hidden}
+.stat-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.sb-or::before{background:var(--orange)}.sb-gr::before{background:var(--green)}.sb-bl::before{background:var(--blue)}.sb-yl::before{background:var(--yellow)}.sb-pu::before{background:var(--purple)}.sb-re::before{background:var(--red)}
+.stat-label{font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:600}
+.stat-value{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900}
+.sv-or{color:var(--orange)}.sv-gr{color:var(--green)}.sv-bl{color:var(--blue)}.sv-yl{color:var(--yellow)}.sv-pu{color:var(--purple)}.sv-re{color:var(--red)}
+.form-group{margin-bottom:12px}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+input,select,textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border 0.2s}
+input:focus,select:focus,textarea:focus{border-color:var(--orange)}
+textarea{resize:vertical;min-height:60px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;letter-spacing:0.5px;cursor:pointer;transition:all 0.2s;margin-bottom:8px}
+.btn:active{transform:scale(0.98)}
+.btn-primary{background:linear-gradient(135deg,var(--orange),var(--red));color:white}
+.btn-blue{background:var(--blue);color:white}
+.btn-green{background:var(--green);color:#000}
+.btn-purple{background:var(--purple);color:white}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--muted)}
+.btn-sm{padding:8px 14px;border-radius:8px;border:none;font-family:'Barlow',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
+.btn-sm-gr{background:var(--green);color:#000}.btn-sm-re{background:var(--red);color:white}.btn-sm-or{background:var(--orange);color:white}.btn-sm-pu{background:var(--purple);color:white}.btn-sm-bl{background:var(--blue);color:white}
+.orc-tabs{display:flex;gap:8px;margin-bottom:14px}
+.orc-tab{flex:1;padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;text-align:center;font-family:'Barlow',sans-serif}
+.orc-tab.active{background:var(--orange);color:white;border-color:var(--orange)}
+.result-box{background:linear-gradient(135deg,#1a0a00,#0d1117);border:1px solid var(--orange);border-radius:14px;padding:16px;margin-bottom:12px}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+.result-row:last-child{border-bottom:none}
+.fin-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.fin-row:last-child{border-bottom:none}
+.hist-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.status-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;display:inline-block}
+.s-andamento{background:#1e3a5f;color:var(--blue)}.s-ganho{background:#14532d;color:var(--green)}.s-perdido{background:#4c0519;color:var(--red)}.s-pendente{background:#422006;color:var(--yellow)}
+.autocomplete-list{position:absolute;top:100%;left:0;right:0;z-index:200;background:var(--card);border:1px solid var(--orange);border-radius:10px;overflow:hidden;margin-top:4px;display:none}
+.autocomplete-list.show{display:block}
+.ac-item{padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border)}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover{background:var(--surface);color:var(--orange)}
+.banner{border-radius:12px;padding:14px;margin-bottom:12px;font-size:13px;text-align:center}
+.bn-green{background:#14532d;border:1px solid var(--green);color:var(--green)}
+.bn-blue{background:#1e3a5f;border:1px solid var(--blue);color:var(--blue)}
+.bn-orange{background:#1a0a00;border:1px solid var(--orange);color:var(--orange)}
+.bn-purple{background:#3b0764;border:1px solid var(--purple);color:var(--purple)}
+.bn-yellow{background:#422006;border:1px solid var(--yellow);color:var(--yellow)}
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:14px}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.chat-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;min-height:200px;max-height:300px;overflow-y:auto}
+.msg{margin-bottom:12px}
+.msg-agent{display:flex;gap:8px;align-items:flex-start}
+.msg-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--red));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.msg-bubble{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 13px;font-size:13px;line-height:1.6;max-width:88%}
+.msg-user{display:flex;justify-content:flex-end}
+.msg-user .msg-bubble{background:var(--orange);color:white;border:none}
+.typing-dots{display:flex;gap:4px;align-items:center}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--orange);animation:bounce 1s infinite}
+.dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
+.chat-row{display:flex;gap:8px}
+.chat-row input{flex:1;margin:0}
+.send-btn{background:linear-gradient(135deg,var(--orange),var(--red));border:none;border-radius:10px;padding:0 16px;color:white;font-size:16px;cursor:pointer}
+.mes-sel{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;margin-bottom:12px;outline:none}
+.sec-titulo{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loadingScreen" style="display:none">
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;color:var(--orange)">VAP<span style="color:var(--text)">FRETES</span></div>
+  <div class="spinner"></div>
+</div>
+
+<div id="loginScreen">
+  <div class="login-logo">VAP<span>FRETES</span></div>
+  <div class="login-sub">🚚 Sistema de fretes e entregas</div>
+  <div class="login-card">
+    <div class="login-title" id="loginTitulo">Entrar na sua conta</div>
+    <div class="login-err" id="loginErr"></div>
+    <div class="form-group"><label>E-mail</label><input type="email" id="loginEmail" placeholder="seu@email.com"></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="loginSenha" placeholder="••••••••" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
+    <button class="btn btn-primary" onclick="fazerLogin()" id="btnLogin">ENTRAR</button>
+    <button class="btn btn-outline" onclick="toggleCadastro()" id="btnToggle">Criar conta</button>
+    <div id="cadastroExtra" style="display:none;margin-top:12px">
+      <div class="form-group"><label>Nome completo</label><input type="text" id="loginNome" placeholder="Seu nome"></div>
+      <div class="form-group"><label>Telefone / WhatsApp</label><input type="tel" id="loginTel" placeholder="(11) 99999-9999"></div>
+      <div class="form-group"><label>Tipo de conta</label>
+        <select id="loginTipo" onchange="mudaTipoCadastro()">
+          <option value="cliente">🛍️ Cliente — quero contratar fretes</option>
+          <option value="motorista">🚚 Motorista — quero trabalhar</option>
+        </select>
+      </div>
+      <div id="extra-motorista" style="display:none">
+        <div style="background:#1e3a5f;border:1px solid var(--blue);border-radius:10px;padding:12px;font-size:13px;color:var(--blue);margin-bottom:12px">
+          📸 Após o cadastro, envie sua <strong>CNH + documento do veículo</strong> pelo WhatsApp para aprovação em até 72h.
+        </div>
+      </div>
+      <div id="extra-cliente" style="display:block">
+        <div style="background:#14532d;border:1px solid var(--green);border-radius:10px;padding:12px;font-size:13px;color:var(--green);margin-bottom:12px">
+          ✅ Acesso liberado imediatamente após o cadastro!
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="appScreen">
+  <header>
+    <div class="logo">VAP<span>FRETES</span></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="user-badge" id="userBadge"></span>
+      <button class="logout-btn" onclick="fazerLogout()">Sair</button>
+    </div>
+  </header>
+  <main>
+
+    <!-- DASHBOARD -->
+    <div class="section active" id="s-dashboard">
+
+      <!-- MOTORISTA -->
+      <div id="dash-mot" style="display:none">
+        <div id="notif-dash" style="display:none" class="banner bn-purple">📦 Você tem fretes aguardando confirmação! Veja em <strong>Histórico</strong>.</div>
+        <select class="mes-sel" id="mes-mot" onchange="carregarMot()"></select>
+        <div class="stats-grid">
+          <div class="stat-box sb-gr"><div class="stat-label">📈 Meu Lucro</div><div class="stat-value sv-gr" id="m-luc">R$0</div></div>
+          <div class="stat-box sb-re"><div class="stat-label">⛽ Combustível</div><div class="stat-value sv-re" id="m-comb">R$0</div></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box sb-bl"><div class="stat-label">✅ Fretes Feitos</div><div class="stat-value sv-bl" id="m-feitos">0</div></div>
+          <div class="stat-box sb-yl"><div class="stat-label">🔄 Em Andamento</div><div class="stat-value sv-yl" id="m-and">0</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 Resumo do Período</div>
+          <div class="fin-row"><span style="color:var(--muted)">⛽ Combustível</span><span style="font-weight:700;color:var(--red)" id="m-r-comb">R$0,00</span></div>
+          <div class="fin-row" id="m-row-taxa" style="display:none"><span style="color:var(--muted)">📤 Taxa VapFretes (12%)</span><span style="font-weight:700;color:var(--red)" id="m-r-taxa">R$0,00</span></div>
+          <div class="fin-row"><span style="font-weight:700">📈 Lucro líquido</span><span style="font-weight:700;color:var(--green);font-size:15px" id="m-r-luc">R$0,00</span></div>
+        </div>
+        <div class="card"><div id="prox-mot" style="font-size:14px;line-height:1.7">🚚 <strong>Calcule</strong> um orçamento na aba <strong>Calcular</strong>!</div></div>
+      </div>
+
+      <!-- GERENTE -->
+      <div id="dash-ger" style="display:none">
+        <div class="banner bn-orange">👑 <strong>Painel do Gerente</strong> — visão completa da equipe</div>
+        <select class="mes-sel" id="mes-ger" onchange="carregarGer()"></select>
+
+        <div class="sec-titulo" style="color:var(--purple)">💼 Lucro da VapFretes</div>
+        <div class="stats-grid">
+          <div class="stat-box sb-pu"><div class="stat-label">📤 Taxas Admin.</div><div class="stat-value sv-pu" id="g-taxas">R$0</div></div>
+          <div class="stat-box sb-pu"><div class="stat-label">⭐ Mensalidades</div><div class="stat-value sv-pu" id="g-mens">R$0</div></div>
+        </div>
+        <div class="stat-box sb-pu" style="margin-bottom:12px;padding:14px">
+          <div class="stat-label">💰 LUCRO TOTAL VAPFRETES</div>
+          <div class="stat-value sv-pu" id="g-luc-vap">R$0</div>
+        </div>
+
+        <div class="sec-titulo" style="color:var(--green)">🚚 Faturamento dos Motoristas</div>
+        <div class="stats-grid">
+          <div class="stat-box sb-gr"><div class="stat-label">💰 Faturamento Geral</div><div class="stat-value sv-gr" id="g-fat">R$0</div></div>
+          <div class="stat-box sb-bl"><div class="stat-label">📈 Lucro Motoristas</div><div class="stat-value sv-bl" id="g-luc-mot">R$0</div></div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box sb-yl"><div class="stat-label">✅ Fretes Totais</div><div class="stat-value sv-yl" id="g-fretes">0</div></div>
+          <div class="stat-box sb-bl"><div class="stat-label">🔄 Em Andamento</div><div class="stat-value sv-bl" id="g-and">0</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📊 Por Motorista</div>
+          <div id="g-por-mot"></div>
+        </div>
+      </div>
+    </div>
+
+      </div>
+    </div>
+
+    <!-- DASHBOARD CLIENTE -->
+    <div class="section" id="s-cli-dashboard">
+      <div class="banner bn-blue" style="margin-bottom:12px">🛍️ Bem-vindo! Solicite fretes e acompanhe seus pedidos.</div>
+      <div id="avisos-cli"></div>
+      <div class="stats-grid">
+        <div class="stat-box sb-bl"><div class="stat-label">📦 Meus Pedidos</div><div class="stat-value sv-bl" id="cli-total">0</div></div>
+        <div class="stat-box sb-gr"><div class="stat-label">✅ Concluídos</div><div class="stat-value sv-gr" id="cli-ok">0</div></div>
+      </div>
+      <div class="card"><div class="card-title">🎯 O que deseja?</div>
+        <button class="btn btn-primary" onclick="showTab('cli-calcular')">⚡ CALCULAR NOVO FRETE</button>
+        <button class="btn btn-blue" onclick="showTab('cli-historico')">📋 Ver meus pedidos</button>
+      </div>
+    </div>
+
+    <!-- CALCULAR CLIENTE -->
+    <div class="section" id="s-cli-calcular">
+      <div class="orc-tabs">
+        <div class="orc-tab active" onclick="setTipo('frete')">🚚 Frete</div>
+        <div class="orc-tab" onclick="setTipo('compra')">🛒 +Compra</div>
+        <div class="orc-tab" onclick="setTipo('material')">🧱 Material</div>
+      </div>
+      <div class="card">
+        <div class="card-title">📍 Rota</div>
+        <div style="background:var(--surface);border:1px solid var(--green);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green)">✅ Distância automática ativa</div>
+        <div class="form-group"><label>📍 Ponto A — Origem</label><div style="position:relative"><input type="text" id="cli-pontoA" placeholder="Rua das Flores, 100, Jacareí" oninput="acSearch('cli-pontoA','cli-listaA')" autocomplete="off"><div id="cli-listaA" class="autocomplete-list"></div></div></div>
+        <div class="form-group"><label>📍 Ponto B — Parada</label><div style="position:relative"><input type="text" id="cli-pontoB" placeholder="Loja, São José" oninput="acSearch('cli-pontoB','cli-listaB')" autocomplete="off"><div id="cli-listaB" class="autocomplete-list"></div></div></div>
+        <div class="form-group"><label>📍 Ponto C <span style="color:var(--muted);font-weight:400;text-transform:none">(opcional)</span></label><div style="position:relative"><input type="text" id="cli-pontoC" placeholder="Av. Brasil, São Paulo" oninput="acSearch('cli-pontoC','cli-listaC')" autocomplete="off"><div id="cli-listaC" class="autocomplete-list"></div></div></div>
+        <button class="btn btn-blue" id="cli-btnDist" onclick="calcDistCli()">📍 CALCULAR DISTÂNCIA</button>
+        <div id="cli-rota-res" style="display:none;background:var(--surface);border:1px solid var(--orange);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px"></div>
+        <div class="row2">
+          <div class="form-group"><label>Distância (km)</label><input type="number" id="cli-km" placeholder="Auto ou manual"></div>
+          <div class="form-group"><label>Percurso</label><select id="cli-ida"><option value="1">Só ida</option><option value="2">Ida e volta</option></select></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" id="cli-tit-serv">⚙️ Detalhes do Serviço</div>
+        <div class="row2">
+          <div class="form-group"><label>Tempo estimado (h)</label><input type="number" id="cli-tempo" placeholder="Ex: 2"></div>
+          <div class="form-group"><label>Observações</label><input type="text" id="cli-obs" placeholder="Ex: carga pesada"></div>
+        </div>
+        <div class="form-group" id="cli-grp-compra" style="display:none"><label>Valor da compra (R$)</label><input type="number" id="cli-compra" placeholder="Ex: 850"></div>
+        <div class="form-group" id="cli-grp-material" style="display:none"><label>Valor do material (R$)</label><input type="number" id="cli-material" placeholder="Ex: 1200"></div>
+      </div>
+      <button class="btn btn-primary" onclick="gerarOrcCli()">⚡ GERAR ORÇAMENTO</button>
+      <div id="cli-resultado" style="display:none">
+        <div id="cli-orc-box"></div>
+        <div class="card">
+          <div class="card-title">💳 Forma de Pagamento</div>
+          <select id="cli-pagamento" style="margin-bottom:12px">
+            <option value="pix">PIX</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="cartao">Cartão</option>
+          </select>
+          <div style="background:#422006;border:1px solid var(--yellow);border-radius:10px;padding:12px;font-size:13px;color:var(--yellow);margin-bottom:12px">
+            💡 A chave PIX será enviada pelo chat após confirmação do gerente.
+          </div>
+          <button class="btn btn-green" onclick="confirmarPedidoCli()">✅ CONFIRMAR PEDIDO</button>
+          <button class="btn btn-outline" onclick="document.getElementById('cli-resultado').style.display='none'">← Voltar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTÓRICO CLIENTE -->
+    <div class="section" id="s-cli-historico">
+      <div id="cli-lista-hist"><div style="text-align:center;color:var(--muted);font-size:13px;padding:30px">Nenhum pedido ainda.</div></div>
+    </div>
+
+    <!-- AVISOS CLIENTE -->
+    <div class="section" id="s-cli-avisos">
+      <div id="cli-lista-avisos"><div style="text-align:center;color:var(--muted);font-size:13px;padding:30px">Nenhum aviso no momento.</div></div>
+    </div>
+
+    <!-- CALCULAR (motorista/gerente) -->
+    <div class="section" id="s-calcular">
+      <div class="orc-tabs">
+        <div class="orc-tab active" onclick="setTipo('frete')">🚚 Frete</div>
+        <div class="orc-tab" onclick="setTipo('compra')">🛒 +Compra</div>
+        <div class="orc-tab" onclick="setTipo('material')">🧱 Material</div>
+      </div>
+      <div class="card">
+        <div class="card-title">📍 Rota e Cliente</div>
+        <div style="background:var(--surface);border:1px solid var(--green);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green)">✅ Distância automática ativa</div>
+        <div class="form-group"><label>Nome do Cliente</label><input type="text" id="nomeCliente" placeholder="Ex: João Silva"></div>
+        <div class="form-group"><label>📍 Ponto A — Origem</label><div style="position:relative"><input type="text" id="pontoA" placeholder="Rua das Flores, 100, Jacareí" oninput="acSearch('pontoA','listaA')" autocomplete="off"><div id="listaA" class="autocomplete-list"></div></div></div>
+        <div class="form-group"><label>📍 Ponto B — Parada</label><div style="position:relative"><input type="text" id="pontoB" placeholder="Loja de Materiais, São José" oninput="acSearch('pontoB','listaB')" autocomplete="off"><div id="listaB" class="autocomplete-list"></div></div></div>
+        <div class="form-group"><label>📍 Ponto C — Destino final <span style="color:var(--muted);font-weight:400;text-transform:none">(opcional)</span></label><div style="position:relative"><input type="text" id="pontoC" placeholder="Av. Brasil, 200, São Paulo" oninput="acSearch('pontoC','listaC')" autocomplete="off"><div id="listaC" class="autocomplete-list"></div></div></div>
+        <button class="btn btn-blue" id="btnDist" onclick="calcDist()">📍 CALCULAR DISTÂNCIA</button>
+        <div id="rota-res" style="display:none;background:var(--surface);border:1px solid var(--orange);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px"></div>
+        <div class="row2">
+          <div class="form-group"><label>Distância (km)</label><input type="number" id="kmTotal" placeholder="Auto ou manual"></div>
+          <div class="form-group"><label>Consumo (km/L)</label><input type="number" id="consumo" value="10"></div>
+        </div>
+        <div class="row2">
+          <div class="form-group"><label>Gasolina (R$/L)</label><input type="number" id="precoComb" value="6.20"></div>
+          <div class="form-group"><label>Percurso</label><select id="idaVolta"><option value="1">Só ida</option><option value="2">Ida e volta</option></select></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" id="tit-servico">⚙️ Detalhes do Serviço</div>
+        <div class="row2">
+          <div class="form-group"><label>Tempo (horas)</label><input type="number" id="tempoH" placeholder="Ex: 2"></div>
+          <div class="form-group"><label>Valor/hora (R$)</label><input type="number" id="valorHora" value="50"></div>
+        </div>
+        <div class="form-group" id="grp-compra" style="display:none"><label>Valor da compra (R$)</label><input type="number" id="valorCompra" placeholder="Ex: 850"></div>
+        <div class="form-group" id="grp-material" style="display:none"><label>Valor do material (R$)</label><input type="number" id="valorMaterial" placeholder="Ex: 1200"></div>
+        <div class="form-group"><label>Lucro desejado (%)</label><input type="number" id="taxaLucro" value="20"></div>
+        <div class="form-group"><label>Observações</label><textarea id="obsOrc" placeholder="Detalhes adicionais..."></textarea></div>
+      </div>
+      <button class="btn btn-primary" onclick="gerarOrc()">⚡ GERAR ORÇAMENTO</button>
+
+      <!-- Resultado -->
+      <div id="div-resultado" style="display:none">
+        <div id="box-resultado"></div>
+        <div class="card" style="text-align:center">
+          <div class="card-title">O cliente aceitou o orçamento?</div>
+          <div id="btns-mot" style="display:none">
+            <button class="btn btn-green" id="btn-aceitar" onclick="aceitarMot()">✅ SIM — Iniciar Serviço</button>
+            <button class="btn btn-outline" onclick="voltarCalc()">← Voltar e ajustar</button>
+          </div>
+          <div id="btns-ger" style="display:none">
+            <button class="btn btn-green" onclick="aceitarMot()">✅ Executar eu mesmo</button>
+            <button class="btn btn-purple" onclick="abrirAtribuir()">👥 Atribuir a Motorista</button>
+            <button class="btn btn-outline" onclick="voltarCalc()">← Voltar e ajustar</button>
+          </div>
+        </div>
+        <div id="div-atribuir" style="display:none" class="card">
+          <div class="card-title">👥 Escolher Motorista</div>
+          <div id="lista-mots-sel"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="section" id="s-historico">
+      <!-- Atribuídos (motorista) -->
+      <div id="sec-atrib" style="display:none">
+        <div class="sec-titulo" style="color:var(--purple)">📦 Fretes aguardando sua confirmação</div>
+        <div id="lista-atrib"></div>
+        <div style="height:12px"></div>
+      </div>
+      <!-- Gerente: fretes recusados para reatribuir -->
+      <div id="sec-reatrib" style="display:none">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;color:var(--yellow)">⏳ Fretes Recusados — Reatribuir</div>
+        <div id="lista-reatrib"></div>
+        <div style="height:12px"></div>
+      </div>
+      <div id="sec-and" style="display:none">
+        <div class="sec-titulo" style="color:var(--blue)">🔄 Em Andamento</div>
+        <div id="lista-and"></div>
+        <div style="height:12px"></div>
+      </div>
+      <!-- Histórico -->
+      <div class="sec-titulo" style="color:var(--muted)">📋 Histórico Completo</div>
+      <div id="lista-hist"></div>
+    </div>
+
+    <!-- FINANCEIRO -->
+    <div class="section" id="s-financeiro">
+      <div class="banner bn-green">💰 Atualizado automaticamente ao finalizar serviços</div>
+      <select class="mes-sel" id="mes-fin" onchange="carregarFin()"></select>
+      <div class="card">
+        <div class="card-title">📊 Totais do Período</div>
+        <div class="fin-row"><span style="color:var(--muted)">⛽ Combustível</span><span style="font-weight:700;color:var(--red)" id="fin-comb">R$0,00</span></div>
+        <div class="fin-row" id="fin-row-taxa" style="display:none"><span style="color:var(--muted)">📤 Taxa VapFretes</span><span style="font-weight:700;color:var(--red)" id="fin-taxa">R$0,00</span></div>
+        <div class="fin-row"><span style="font-weight:700">📈 Lucro líquido</span><span style="font-weight:700;color:var(--green);font-size:15px" id="fin-luc">R$0,00</span></div>
+      </div>
+      <div id="lista-fin"></div>
+    </div>
+
+    <!-- AGENTE -->
+    <div class="section" id="s-agente">
+      <div class="card">
+        <div class="card-title">🔑 Chave Claude API</div>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="claudeKey" placeholder="sk-ant-..." style="flex:1">
+          <button style="background:var(--orange);border:none;border-radius:10px;padding:0 14px;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif" onclick="salvarKey()">Salvar</button>
+        </div>
+        <div id="claude-status" style="font-size:11px;margin-top:6px;color:var(--muted)">Necessário para o agente responder</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🤖 Agente VapFretes</div>
+        <div class="chat-box" id="chatBox"></div>
+        <div class="chat-row">
+          <input type="text" id="chatInput" placeholder="Pergunte qualquer coisa..." onkeydown="if(event.key==='Enter')sendMsg()">
+          <button class="send-btn" onclick="sendMsg()">➤</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EQUIPE -->
+    <div class="section" id="s-equipe">
+      <!-- Motoristas aguardando aprovação -->
+      <div id="sec-aprovacao" style="display:none">
+        <div class="sec-titulo" style="color:var(--yellow)">⏳ Motoristas Aguardando Aprovação</div>
+        <div id="lista-aprovacao"></div>
+        <div style="height:12px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">👥 Gestão de Motoristas</div>
+        <div id="lista-usuarios"></div>
+      </div>
+      <!-- Pedidos de clientes aguardando confirmação de pagamento -->
+      <div class="card">
+        <div class="card-title">💳 Pedidos Aguardando Pagamento</div>
+        <div id="lista-pedidos-pag"><div style="text-align:center;color:var(--muted);font-size:13px;padding:12px">Nenhum pedido pendente.</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📢 Publicar Aviso / Promoção</div>
+        <div class="form-group"><label>Título</label><input type="text" id="aviso-titulo" placeholder="Ex: Promoção de frete grátis!"></div>
+        <div class="form-group"><label>Mensagem</label><textarea id="aviso-msg" placeholder="Detalhes da promoção..."></textarea></div>
+        <button class="btn btn-orange" style="background:var(--orange);color:white" onclick="publicarAviso()">📢 Publicar para Clientes</button>
+      </div>
+      <div class="card">
+        <div class="card-title">⭐ Registrar Mensalidade Premium</div>
+        <div class="row2">
+          <div class="form-group"><label>Motorista Premium</label><select id="sel-mens-mot"><option value="">Selecione...</option></select></div>
+          <div class="form-group"><label>Valor (R$)</label><input type="number" id="val-mens" placeholder="Ex: 150"></div>
+        </div>
+        <button class="btn btn-purple" onclick="registrarMens()">Registrar Mensalidade</button>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 Todos os Serviços</div>
+        <div id="lista-todos-servicos"></div>
+      </div>
+    </div>
+
+  </main>
+  <div class="bottom-nav" id="bottomNav"></div>
+</div>
+
+<script>
+var SURL='https://atptmrycmvpocllqwgzo.supabase.co';
+var SKEY='sb_publishable_aPK1_Jhh0hQQQbQ56UEwOw_wOEOjmQs';
+var db=null;
+var CU=null,CP=null,ORC=null;
+
+// Inicializa DB com retry até Supabase carregar
+function getDB(){
+  if(!db&&typeof supabase!=='undefined'){
+    db=supabase.createClient(SURL,SKEY);
+  }
+  return db;
+}
+
+function mesAtual(){var d=new Date();return d.getFullYear()+'-'+(''+(d.getMonth()+1)).padStart(2,'0');}
+function mesLabel(m){if(!m)return'';var p=m.split('-');var ms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];return ms[parseInt(p[1])-1]+'/'+p[0];}
+function isGer(){return CP&&(CP.role==='gerente'||CP.role==='admin');}
+function isPrem(){return CP&&CP.plano==='premium';}
+function calcTaxa(v){return(isGer()||isPrem())?0:v*0.12;}
+
+async function loadProfile(user){
+  CU=user;
+  var prof=null;
+  for(var i=0;i<3;i++){
+    var r=await db.from('profiles').select('*').eq('id',user.id).single();
+    if(r.data){prof=r.data;break;}
+    await new Promise(function(res){setTimeout(res,500);});
+  }
+  if(!prof){
+    await db.from('profiles').insert({id:user.id,email:user.email,nome:(user.user_metadata&&user.user_metadata.nome)||user.email.split('@')[0],role:'motorista',plano:'normal'});
+    var r2=await db.from('profiles').select('*').eq('id',user.id).single();
+    prof=r2.data;
+  }
+  CP=prof||{id:user.id,email:user.email,nome:user.email.split('@')[0],role:'motorista',plano:'normal'};
+  showApp();
+}
+
+async function init(){
+  // Espera o Supabase carregar (até 10 tentativas)
+  for(var i=0;i<10;i++){
+    if(typeof supabase!=='undefined'){db=supabase.createClient(SURL,SKEY);break;}
+    await new Promise(function(r){setTimeout(r,500);});
+  }
+  if(!db){showErr('Erro de conexão. Recarregue a página.');return;}
+  // Mostra login imediatamente
+  showLogin();
+  // Verifica sessão em background
+  var s=await db.auth.getSession();
+  if(s.data&&s.data.session) await loadProfile(s.data.session.user);
+  db.auth.onAuthStateChange(async function(e,sess){
+    if(e==='SIGNED_IN'&&sess) await loadProfile(sess.user);
+    if(e==='SIGNED_OUT') showLogin();
+  });
+}
+
+function showApp(){
+  document.getElementById('loadingScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appScreen').style.display='block';
+  setupUI();
+  fillMeses();
+  loadAll();
+  iniciarPolling();
+}
+
+function mudaTipoCadastro(){
+  var tipo=document.getElementById('loginTipo').value;
+  document.getElementById('extra-motorista').style.display=tipo==='motorista'?'block':'none';
+  document.getElementById('extra-cliente').style.display=tipo==='cliente'?'block':'none';
+}
+
+var isCad=false;
+function toggleCadastro(){
+  isCad=!isCad;
+  document.getElementById('cadastroExtra').style.display=isCad?'block':'none';
+  document.getElementById('btnLogin').textContent=isCad?'CRIAR CONTA':'ENTRAR';
+  document.getElementById('btnToggle').textContent=isCad?'Já tenho conta':'Criar conta';
+  document.getElementById('loginTitulo').textContent=isCad?'Criar nova conta':'Entrar na sua conta';
+}
+
+async function fazerLogin(){
+  if(!db){showErr('⏳ Ainda conectando... tente em 2 segundos.');return;}
+  var email=document.getElementById('loginEmail').value.trim();
+  var senha=document.getElementById('loginSenha').value;
+  var btn=document.getElementById('btnLogin');
+  document.getElementById('loginErr').style.display='none';
+  if(!email||!senha){showErr('Preencha e-mail e senha!');return;}
+  btn.textContent='...';btn.disabled=true;
+  if(isCad){
+    var nome=document.getElementById('loginNome').value.trim()||email.split('@')[0];
+    var tel=document.getElementById('loginTel').value.trim();
+    var tipo=document.getElementById('loginTipo').value;
+    var ehCliente=tipo==='cliente';
+    var r=await db.auth.signUp({email:email,password:senha,options:{data:{nome:nome}}});
+    if(r.error){showErr(r.error.message==='User already registered'?'E-mail já cadastrado!':r.error.message);}
+    else{
+      // Cria perfil com tipo correto
+      if(r.data&&r.data.user){
+        await db.from('profiles').upsert({
+          id:r.data.user.id,email:email,nome:nome,telefone:tel,
+          role:ehCliente?'cliente':'motorista',
+          tipo:ehCliente?'cliente':'motorista',
+          plano:'normal',
+          aprovado:ehCliente?true:false // cliente aprovado imediatamente
+        });
+      }
+      if(ehCliente){
+        showErr('✅ Conta criada! Você já pode entrar.',true);
+      }else{
+        showErr('✅ Cadastro enviado! Envie seus documentos pelo WhatsApp. Aprovação em até 72h.',true);
+      }
+    }
+  }else{
+    var r=await db.auth.signInWithPassword({email:email,password:senha});
+    if(r.error) showErr('E-mail ou senha incorretos!');
+  }
+  btn.textContent=isCad?'CRIAR CONTA':'ENTRAR';btn.disabled=false;
+}
+function showErr(msg,ok){
+  var el=document.getElementById('loginErr');
+  el.textContent=msg;el.style.display='block';
+  el.style.background=ok?'#14532d':'#4c0519';
+  el.style.color=ok?'#22c55e':'#ef4444';
+  el.style.border='1px solid '+(ok?'#22c55e':'#ef4444');
+}
+async function fazerLogout(){await db.auth.signOut();}
+
+function isCli(){return CP&&(CP.role==='cliente'||CP.tipo==='cliente');}
+
+function setupUI(){
+  var role=CP.role||'motorista';
+  var plano=CP.plano||'normal';
+  var nome=CP.nome||'Usuário';
+  var ger=isGer();
+  var prem=isPrem();
+  var cli=isCli();
+  var badge=document.getElementById('userBadge');
+
+  if(cli){
+    // CLIENTE
+    badge.textContent='🛍️ '+nome;
+    badge.className='user-badge';
+    badge.style.color='var(--blue)';badge.style.borderColor='var(--blue)';
+    var tabs=[
+      {id:'cli-dashboard',icon:'🏠',label:'Início'},
+      {id:'cli-calcular',icon:'⚡',label:'Calcular'},
+      {id:'cli-historico',icon:'📋',label:'Pedidos'},
+      {id:'cli-avisos',icon:'📢',label:'Avisos'}
+    ];
+    document.getElementById('bottomNav').innerHTML=tabs.map(function(t){
+      return '<button class="nav-btn'+(t.id==='cli-dashboard'?' active':'')+'" id="nb-'+t.id+'" onclick="showTab(\''+t.id+'\')"><div class="nav-icon">'+t.icon+'</div>'+t.label+'</button>';
+    }).join('');
+    // Mostra seção cliente
+    document.getElementById('s-cli-dashboard').classList.add('active');
+    document.getElementById('s-dashboard').classList.remove('active');
+    loadDashCli();
+    return;
+  }
+
+  if(ger){
+    badge.textContent=role==='gerente'?'👑 Gerente':'⚙️ Admin';
+    badge.className='user-badge '+(role==='gerente'?'badge-gerente':'badge-admin');
+    document.getElementById('dash-ger').style.display='block';
+    document.getElementById('btns-ger').style.display='block';
+  }else{
+    // Motorista não aprovado
+    if(CP.aprovado===false){
+      badge.textContent='⏳ Aguard. aprovação';
+      badge.className='user-badge badge-pendente';
+      badge.style.color='var(--yellow)';badge.style.borderColor='var(--yellow)';
+      document.getElementById('dash-mot').style.display='block';
+      document.getElementById('s-dashboard').innerHTML='<div style="text-align:center;padding:40px 20px"><div style="font-size:40px;margin-bottom:16px">⏳</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:22px;font-weight:700;color:var(--yellow);margin-bottom:12px">Cadastro em análise</div><div style="font-size:14px;color:var(--muted);line-height:1.7">Envie sua <strong style="color:var(--text)">CNH e documento do veículo</strong> pelo WhatsApp.<br>Aprovação em até <strong style="color:var(--orange)">72 horas</strong>!</div></div>';
+      document.getElementById('bottomNav').innerHTML='<button class="nav-btn active"><div class="nav-icon">⏳</div>Aguardando</button>';
+      return;
+    }
+    document.getElementById('dash-mot').style.display='block';
+    document.getElementById('btns-mot').style.display='block';
+    badge.textContent=prem?'⭐ '+nome+' (Premium)':'🚚 '+nome;
+    badge.className='user-badge '+(prem?'badge-premium':'badge-motorista');
+    if(!prem){
+      document.getElementById('m-row-taxa').style.display='flex';
+      document.getElementById('fin-row-taxa').style.display='flex';
+    }
+  }
+
+  var tabs=[
+    {id:'dashboard',icon:'📊',label:'Dashboard'},
+    {id:'calcular',icon:'⚡',label:'Calcular'},
+    {id:'historico',icon:'📋',label:'Histórico'},
+    {id:'financeiro',icon:'💰',label:'Financeiro'},
+    {id:'agente',icon:'🤖',label:'Agente'}
+  ];
+  if(ger) tabs.push({id:'equipe',icon:'👥',label:'Equipe'});
+  document.getElementById('bottomNav').innerHTML=tabs.map(function(t){
+    return '<button class="nav-btn'+(t.id==='dashboard'?' active':'')+'" id="nb-'+t.id+'" onclick="showTab(\''+t.id+'\')"><div class="nav-icon">'+t.icon+'</div>'+t.label+'</button>';
+  }).join('');
+  var ck=localStorage.getItem('claudeKey');
+  if(ck){document.getElementById('claudeKey').value=ck;claudeKey=ck;document.getElementById('claude-status').textContent='✅ Agente ativo!';document.getElementById('claude-status').style.color='var(--green)';}
+  setTimeout(function(){addMsg('👋 Olá, '+nome+'! Sou seu agente VapFretes.',false);},400);
+}
+
+function showTab(id){
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  var sec=document.getElementById('s-'+id);
+  if(sec) sec.classList.add('active');
+  var nb=document.getElementById('nb-'+id);
+  if(nb) nb.classList.add('active');
+  if(id==='equipe'){loadEquipe();carregarAprovacoes();}
+  if(id==='historico') loadHist();
+  if(id==='financeiro') carregarFin();
+  if(id==='dashboard'){if(isGer()) carregarGer(); else carregarMot();}
+  if(id==='cli-historico') loadHistCli();
+  if(id==='cli-avisos') loadAvisosCli();
+  if(id==='cli-dashboard') loadDashCli();
+}
+
+function showBanner(msg,tipo,dur){
+  dur=dur||4000;
+  var b=document.createElement('div');
+  b.className='banner bn-'+tipo;b.innerHTML=msg;
+  var s=document.querySelector('.section.active');
+  if(s){s.insertBefore(b,s.firstChild);setTimeout(function(){b.remove();},dur);}
+}
+
+function fillMeses(){
+  var opts='<option value="">Todos os meses</option>';
+  var d=new Date();
+  for(var i=0;i<12;i++){
+    var m=new Date(d.getFullYear(),d.getMonth()-i,1);
+    var val=m.getFullYear()+'-'+(''+(m.getMonth()+1)).padStart(2,'0');
+    opts+='<option value="'+val+'"'+(i===0?' selected':'')+'>'+mesLabel(val)+'</option>';
+  }
+  ['mes-mot','mes-ger','mes-fin'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.innerHTML=opts;
+  });
+}
+
+async function loadAll(){
+  if(isCli()){await loadDashCli();return;}
+  if(isGer()) await carregarGer();
+  else await carregarMot();
+  await loadHist();
+}
+
+// === DASHBOARD MOTORISTA ===
+async function carregarMot(){
+  var mes=document.getElementById('mes-mot').value;
+  var sQ=db.from('servicos').select('*').eq('user_id',CU.id);
+  if(mes) sQ=sQ.eq('mes_ano',mes);
+  var tQ=db.from('tratativas').select('*').eq('user_id',CU.id);
+  var aQ=db.from('atribuicoes').select('*').eq('motorista_id',CU.id).eq('status','pendente');
+  var rs=await Promise.all([sQ,tQ,aQ]);
+  var servicos=rs[0].data||[];
+  var tratas=rs[1].data||[];
+  var atribs=rs[2].data||[];
+  var comb=servicos.reduce(function(a,s){return a+(s.combustivel||0);},0);
+  var taxa=servicos.reduce(function(a,s){return a+(s.taxa_admin||0);},0);
+  var luc=servicos.reduce(function(a,s){return a+(s.lucro_motorista||0);},0);
+  var feitos=tratas.filter(function(t){return t.status==='ganho';}).length;
+  var and=tratas.filter(function(t){return t.status==='andamento';}).length;
+  document.getElementById('m-luc').textContent='R$'+luc.toFixed(0);
+  document.getElementById('m-comb').textContent='R$'+comb.toFixed(0);
+  document.getElementById('m-feitos').textContent=feitos;
+  document.getElementById('m-and').textContent=and;
+  document.getElementById('m-r-comb').textContent='R$'+comb.toFixed(2);
+  document.getElementById('m-r-taxa').textContent='R$'+taxa.toFixed(2);
+  document.getElementById('m-r-luc').textContent='R$'+luc.toFixed(2);
+  var nd=document.getElementById('notif-dash');
+  if(nd) nd.style.display=atribs.length>0?'block':'none';
+  var prox=document.getElementById('prox-mot');
+  if(atribs.length>0) prox.innerHTML='📦 <strong>Você tem fretes aguardando!</strong> Veja em <strong>Histórico</strong>.';
+  else if(and>0) prox.innerHTML='🔄 <strong>'+and+' serviço(s) em andamento.</strong> Finalize em <strong>Histórico</strong>!';
+  else if(feitos>0) prox.innerHTML='⭐ Peça avaliação e indicação aos seus clientes!';
+  else prox.innerHTML='🚚 <strong>Calcule</strong> um orçamento na aba <strong>Calcular</strong>!';
+}
+
+// === DASHBOARD GERENTE ===
+async function carregarGer(){
+  var mes=document.getElementById('mes-ger').value;
+  var sQ=db.from('servicos').select('*,profiles(nome,plano)');
+  if(mes) sQ=sQ.eq('mes_ano',mes);
+  var mQ=db.from('mensalidades').select('*');
+  if(mes) mQ=mQ.eq('mes_ano',mes);
+  var tQ=db.from('tratativas').select('*');
+  var rs=await Promise.all([sQ,mQ,tQ]);
+  var servicos=rs[0].data||[];
+  var mensals=rs[1].data||[];
+  var tratas=rs[2].data||[];
+  var taxas=servicos.reduce(function(a,s){return a+(s.taxa_admin||0);},0);
+  var totMens=mensals.reduce(function(a,m){return a+(m.valor||0);},0);
+  var fat=servicos.reduce(function(a,s){return a+(s.recebido||0);},0);
+  var lucMot=servicos.reduce(function(a,s){return a+(s.lucro_motorista||0);},0);
+  var feitos=tratas.filter(function(t){return t.status==='ganho';}).length;
+  var and=tratas.filter(function(t){return t.status==='andamento';}).length;
+  document.getElementById('g-taxas').textContent='R$'+taxas.toFixed(0);
+  document.getElementById('g-mens').textContent='R$'+totMens.toFixed(0);
+  document.getElementById('g-luc-vap').textContent='R$'+(taxas+totMens).toFixed(0);
+  document.getElementById('g-fat').textContent='R$'+fat.toFixed(0);
+  document.getElementById('g-luc-mot').textContent='R$'+lucMot.toFixed(0);
+  document.getElementById('g-fretes').textContent=feitos;
+  document.getElementById('g-and').textContent=and;
+  var porMot={};
+  servicos.forEach(function(s){
+    var n=(s.profiles&&s.profiles.nome)||'Motorista';
+    if(!porMot[n]) porMot[n]={fat:0,luc:0,taxa:0,fretes:0};
+    porMot[n].fat+=(s.recebido||0);
+    porMot[n].luc+=(s.lucro_motorista||0);
+    porMot[n].taxa+=(s.taxa_admin||0);
+    porMot[n].fretes++;
+  });
+  var el=document.getElementById('g-por-mot');
+  var keys=Object.keys(porMot);
+  if(!keys.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px">Sem dados no período.</div>';return;}
+  el.innerHTML=keys.map(function(n){
+    var d=porMot[n];
+    return '<div class="fin-row"><div><div style="font-weight:600">🚚 '+n+'</div><div style="font-size:11px;color:var(--muted)">'+d.fretes+' fretes · 📤 R$'+d.taxa.toFixed(0)+'</div></div><div style="text-align:right"><div style="font-weight:700;color:var(--green)">Lucro: R$'+d.luc.toFixed(0)+'</div><div style="font-size:11px;color:var(--muted)">Fat: R$'+d.fat.toFixed(0)+'</div></div></div>';
+  }).join('');
+}
+
+// === HISTÓRICO ===
+async function loadHist(){
+  // Fretes atribuídos pendentes (para motorista)
+  if(!isGer()){
+    var ra=await db.from('atribuicoes').select('*,tratativas(*)').eq('motorista_id',CU.id).eq('status','pendente');
+    var atribs=ra.data||[];
+    var secA=document.getElementById('sec-atrib');
+    if(atribs.length>0){
+      secA.style.display='block';
+      document.getElementById('lista-atrib').innerHTML=atribs.map(function(a){
+        var t=a.tratativas||{};
+        return '<div class="hist-card" style="border-color:var(--purple)">'+
+          '<div style="display:flex;justify-content:space-between;margin-bottom:8px">'+
+            '<div><div style="font-size:15px;font-weight:700">'+(t.cliente||'—')+'</div>'+
+            '<div style="font-size:11px;color:var(--muted)">'+(t.tipo||'Frete')+'</div></div>'+
+            '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:20px;font-weight:900;color:var(--green)">R$'+(t.valor||0).toFixed(0)+'</div>'+
+          '</div>'+
+          '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">'+(t.descricao||'')+'</div>'+
+          '<div style="display:flex;gap:8px">'+
+            '<button class="btn-sm btn-sm-gr" style="flex:1;padding:10px" onclick="aceitarAtrib(\''+a.id+'\',\''+t.id+'\')">✅ ACEITAR FRETE</button>'+
+            '<button class="btn-sm btn-sm-re" onclick="recusarAtrib(\''+a.id+'\',\''+t.id+'\')">❌ Recusar</button>'+
+          '</div>'+
+        '</div>';
+      }).join('');
+    }else{secA.style.display='none';}
+  }
+
+  // Em andamento
+  var tQ=db.from('tratativas').select('*').eq('status','andamento');
+  if(!isGer()) tQ=tQ.eq('user_id',CU.id);
+  var ra2=await tQ.order('created_at',{ascending:false});
+  var andando=ra2.data||[];
+  var secAnd=document.getElementById('sec-and');
+  if(andando.length>0){
+    secAnd.style.display='block';
+    document.getElementById('lista-and').innerHTML=andando.map(function(t){
+      return '<div class="hist-card" style="border-color:var(--blue)">'+
+        '<div style="display:flex;justify-content:space-between;margin-bottom:8px">'+
+          '<div><div style="font-size:15px;font-weight:700">'+(t.cliente||'—')+'</div>'+
+          '<div style="font-size:11px;color:var(--muted)">'+(t.tipo||'Frete')+'</div></div>'+
+          '<div style="text-align:right"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:900;color:var(--green)">R$'+(t.valor||0).toFixed(0)+'</div>'+
+          '<span class="status-badge s-andamento">🔄 Em andamento</span></div>'+
+        '</div>'+
+        '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">'+(t.descricao||'')+'</div>'+
+        '<button class="btn-sm btn-sm-gr" style="width:100%;padding:12px;font-size:14px;font-weight:700" onclick="finalizarServ(\''+t.id+'\')">🏁 SERVIÇO FINALIZADO</button>'+
+      '</div>';
+    }).join('');
+  }else{secAnd.style.display='none';}
+
+  // Histórico (finalizados/cancelados) + pendentes para gerente reatribuir
+  var tQ2=db.from('tratativas').select('*').neq('status','andamento');
+  if(!isGer()) tQ2=tQ2.eq('user_id',CU.id);
+  var rh=await tQ2.order('created_at',{ascending:false});
+  var hist=rh.data||[];
+
+  // Gerente: mostrar fretes pendentes (recusados) para reatribuir
+  if(isGer()){
+    var pendentes=hist.filter(function(t){return t.status==='pendente';});
+    var secPend=document.getElementById('sec-reatrib');
+    if(pendentes.length>0){
+      secPend.style.display='block';
+      document.getElementById('lista-reatrib').innerHTML=pendentes.map(function(t){
+        return '<div class="hist-card" style="border-color:var(--yellow);margin-bottom:10px">'+
+          '<div style="display:flex;justify-content:space-between;margin-bottom:8px">'+
+            '<div><div style="font-size:15px;font-weight:700">'+(t.cliente||'—')+'</div>'+
+            '<div style="font-size:11px;color:var(--muted)">'+(t.tipo||'Frete')+'</div></div>'+
+            '<div style="text-align:right"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:900;color:var(--green)">R$'+(t.valor||0).toFixed(0)+'</div>'+
+            '<span class="status-badge s-pendente">⏳ Recusado</span></div>'+
+          '</div>'+
+          '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">'+(t.descricao||'')+'</div>'+
+          '<button class="btn-sm btn-sm-pu" style="width:100%;padding:10px;font-size:13px" onclick="reatribuir(\''+t.id+'\')">👥 REATRIBUIR A OUTRO MOTORISTA</button>'+
+        '</div>';
+      }).join('');
+    }else{secPend.style.display='none';}
+    // Filtra pendentes do histórico geral
+    hist=hist.filter(function(t){return t.status!=='pendente';});
+  }
+
+  var el=document.getElementById('lista-hist');
+  if(!hist.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Nenhum serviço finalizado ainda.</div>';return;}
+  var sl={ganho:'✅ Finalizado',perdido:'❌ Cancelado',pendente:'⏳ Pendente'};
+  var sc={ganho:'s-ganho',perdido:'s-perdido',pendente:'s-pendente'};
+  el.innerHTML=hist.map(function(t){
+    var data=new Date(t.created_at).toLocaleDateString('pt-BR');
+    return '<div class="hist-card">'+
+      '<div style="display:flex;justify-content:space-between">'+
+        '<div><div style="font-size:15px;font-weight:700">'+(t.cliente||'—')+'</div>'+
+        '<div style="font-size:11px;color:var(--muted)">'+(t.tipo||'Frete')+' · '+data+'</div></div>'+
+        '<div style="text-align:right"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:900;color:var(--green)">R$'+(t.valor||0).toFixed(0)+'</div>'+
+        '<span class="status-badge '+(sc[t.status]||'s-pendente')+'">'+(sl[t.status]||t.status)+'</span></div>'+
+      '</div>'+
+      (t.descricao?'<div style="font-size:12px;color:var(--muted);margin-top:6px">'+(t.descricao||'')+'</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+// === FINANCEIRO ===
+async function carregarFin(){
+  var mes=document.getElementById('mes-fin').value;
+  var sQ=db.from('servicos').select('*').eq('user_id',CU.id);
+  if(mes) sQ=sQ.eq('mes_ano',mes);
+  var r=await sQ.order('created_at',{ascending:false});
+  var servicos=r.data||[];
+  var comb=servicos.reduce(function(a,s){return a+(s.combustivel||0);},0);
+  var taxa=servicos.reduce(function(a,s){return a+(s.taxa_admin||0);},0);
+  var luc=servicos.reduce(function(a,s){return a+(s.lucro_motorista||0);},0);
+  document.getElementById('fin-comb').textContent='R$'+comb.toFixed(2);
+  document.getElementById('fin-taxa').textContent='R$'+taxa.toFixed(2);
+  document.getElementById('fin-luc').textContent='R$'+luc.toFixed(2);
+  var el=document.getElementById('lista-fin');
+  if(!servicos.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px">Nenhum serviço no período.</div>';return;}
+  el.innerHTML=servicos.map(function(s){
+    var lucro=s.lucro_motorista||0;
+    var data=new Date(s.created_at).toLocaleDateString('pt-BR');
+    return '<div class="hist-card">'+
+      '<div style="display:flex;justify-content:space-between">'+
+        '<div><div style="font-size:14px;font-weight:600">'+(s.descricao||'—')+'</div>'+
+        '<div style="font-size:11px;color:var(--muted)">'+data+' · ⛽R$'+(s.combustivel||0).toFixed(0)+(s.taxa_admin>0?' · 📤R$'+(s.taxa_admin||0).toFixed(0):'')+'</div></div>'+
+        '<div style="text-align:right"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:900;color:var(--green)">+R$'+lucro.toFixed(0)+'</div>'+
+        '<div style="font-size:11px;color:var(--muted)">de R$'+(s.recebido||0).toFixed(0)+'</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+// === CALCULAR ===
+var orcTipo='frete';
+function setTipo(t){
+  orcTipo=t;
+  document.querySelectorAll('.orc-tab').forEach(function(el,i){el.classList.toggle('active',['frete','compra','material'][i]===t);});
+  document.getElementById('grp-compra').style.display=t==='compra'?'block':'none';
+  document.getElementById('grp-material').style.display=t==='material'?'block':'none';
+  var tt={frete:'⚙️ Detalhes do Frete',compra:'🛒 Compra p/ Cliente',material:'🧱 Material + Entrega'};
+  document.getElementById('tit-servico').textContent=tt[t];
+}
+
+function gerarOrc(){
+  var km=parseFloat(document.getElementById('kmTotal').value)||0;
+  if(!km){alert('Informe a distância!');return;}
+  var cliente=document.getElementById('nomeCliente').value.trim();
+  if(!cliente){alert('Informe o nome do cliente!');return;}
+  var consumo=parseFloat(document.getElementById('consumo').value)||10;
+  var pc=parseFloat(document.getElementById('precoComb').value)||6.20;
+  var mult=parseInt(document.getElementById('idaVolta').value)||1;
+  var tempo=parseFloat(document.getElementById('tempoH').value)||0;
+  var vh=parseFloat(document.getElementById('valorHora').value)||50;
+  var tl=parseFloat(document.getElementById('taxaLucro').value)||20;
+  var vc=parseFloat(document.getElementById('valorCompra').value)||0;
+  var vm=parseFloat(document.getElementById('valorMaterial').value)||0;
+  var pA=document.getElementById('pontoA').value||'Origem';
+  var pB=document.getElementById('pontoB').value||'Destino';
+  var pC=document.getElementById('pontoC').value||'';
+  var obs=document.getElementById('obsOrc').value||'';
+  var kmT=km*mult;
+  var lit=kmT/consumo;
+  var cComb=lit*pc;
+  var cMdo=tempo*vh;
+  // Custo real do motorista = apenas combustível
+  // Preço cobrado ao cliente inclui tudo
+  var base=cComb+cMdo+vc+vm;
+  var lucro=base*(tl/100);
+  var total=base+lucro;
+  var o1=total*0.85,o2=total,o3=total*1.20;
+  var tipos={frete:'Frete',compra:'Frete + Compra',material:'Material + Entrega'};
+  var rota=pC?pA.split(',')[0]+' → '+pB.split(',')[0]+' → '+pC.split(',')[0]:pA.split(',')[0]+' → '+pB.split(',')[0];
+  ORC={cliente:cliente,rota:rota,pA:pA,pB:pB,pC:pC,kmT:kmT,cComb:cComb,cMdo:cMdo,vc:vc,vm:vm,cBase:cComb,total:total,o1:o1,o2:o2,o3:o3,tipo:tipos[orcTipo],tempo:tempo,tl:tl,obs:obs};
+  document.getElementById('box-resultado').innerHTML=
+    '<div class="result-box">'+
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">📍 '+rota+'</div>'+
+    '<div class="result-row"><span style="color:var(--muted)">Cliente</span><span style="font-weight:700">'+cliente+'</span></div>'+
+    '<div class="result-row"><span style="color:var(--muted)">Tipo</span><span style="font-weight:700">'+tipos[orcTipo]+'</span></div>'+
+    '<div class="result-row"><span style="color:var(--muted)">Distância</span><span style="font-weight:700">'+kmT+' km</span></div>'+
+    '<div class="result-row"><span style="color:var(--muted)">⛽ Combustível ('+lit.toFixed(1)+'L)</span><span style="font-weight:700;color:var(--red)">R$'+cComb.toFixed(2)+'</span></div>'+
+    (tempo?'<div class="result-row"><span style="color:var(--muted)">Mão de obra ('+tempo+'h)</span><span style="font-weight:700;color:var(--blue)">R$'+cMdo.toFixed(2)+'</span></div>':'')+
+    (vc?'<div class="result-row"><span style="color:var(--muted)">Compra p/ cliente</span><span style="font-weight:700;color:var(--yellow)">R$'+vc.toFixed(2)+'</span></div>':'')+
+    (vm?'<div class="result-row"><span style="color:var(--muted)">Material</span><span style="font-weight:700;color:var(--yellow)">R$'+vm.toFixed(2)+'</span></div>':'')+
+    '<div style="margin:14px 0 8px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px">3 Opções de Preço</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'+
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">ECONÔMICO</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:22px;font-weight:900;color:var(--blue)">R$'+o1.toFixed(0)+'</div></div>'+
+    '<div style="background:linear-gradient(135deg,#1a0a00,#0d1117);border:2px solid var(--orange);border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--orange);font-weight:700;margin-bottom:4px">✅ IDEAL</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:22px;font-weight:900;color:var(--orange)">R$'+o2.toFixed(0)+'</div></div>'+
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">PREMIUM</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:22px;font-weight:900;color:var(--green)">R$'+o3.toFixed(0)+'</div></div>'+
+    '</div></div>';
+  document.getElementById('div-resultado').style.display='block';
+  document.getElementById('div-atribuir').style.display='none';
+}
+
+function voltarCalc(){document.getElementById('div-resultado').style.display='none';ORC=null;}
+
+async function aceitarMot(){
+  if(!ORC) return;
+  var btn=event.target;btn.textContent='⏳ Salvando...';btn.disabled=true;
+  var mes=mesAtual();
+  var r=await db.from('tratativas').insert({
+    user_id:CU.id,cliente:ORC.cliente,valor:ORC.o2,tipo:ORC.tipo,
+    descricao:ORC.rota+' ('+ORC.kmT+'km)'+(ORC.obs?' — '+ORC.obs:''),
+    status:'andamento',custo_base:ORC.cBase,combustivel:ORC.cComb,chance:100,mes_ano:mes
+  }).select().single();
+  if(r.error){alert('Erro: '+r.error.message);btn.textContent='✅ SIM — Iniciar Serviço';btn.disabled=false;return;}
+  document.getElementById('div-resultado').style.display='none';
+  limparCalc();ORC=null;
+  await loadAll();
+  showTab('historico');
+  setTimeout(function(){showBanner('🔄 <strong>Serviço iniciado para '+r.data.cliente+'!</strong><br>Finalize em <strong>Histórico</strong> quando terminar.','blue',5000);},200);
+}
+
+function limparCalc(){
+  ['nomeCliente','pontoA','pontoB','pontoC','kmTotal','obsOrc'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('rota-res').style.display='none';
+}
+
+async function abrirAtribuir(){
+  document.getElementById('div-atribuir').style.display='block';
+  var r=await db.from('profiles').select('*').eq('role','motorista').order('nome');
+  var mots=r.data||[];
+  document.getElementById('lista-mots-sel').innerHTML=mots.map(function(m){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">'+
+      '<div><div style="font-weight:600">'+(m.nome||m.email)+'</div>'+
+      '<div style="font-size:11px;color:var(--muted)">'+(m.plano==='premium'?'⭐ Premium':'🚚 Normal')+'</div></div>'+
+      '<button class="btn-sm btn-sm-pu" onclick="atribuirFrete(\''+m.id+'\',\''+m.nome+'\')">Atribuir</button>'+
+    '</div>';
+  }).join('');
+}
+
+async function atribuirFrete(motId,motNome){
+  if(!ORC) return;
+  var mes=mesAtual();
+  var r=await db.from('tratativas').insert({
+    user_id:motId,cliente:ORC.cliente,valor:ORC.o2,tipo:ORC.tipo,
+    descricao:ORC.rota+' ('+ORC.kmT+'km)'+(ORC.obs?' — '+ORC.obs:''),
+    status:'pendente',custo_base:ORC.cBase,combustivel:ORC.cComb,chance:100,mes_ano:mes
+  }).select().single();
+  if(r.error){alert('Erro: '+r.error.message);return;}
+  await db.from('atribuicoes').insert({tratativa_id:r.data.id,motorista_id:motId,gerente_id:CU.id,status:'pendente'});
+  document.getElementById('div-resultado').style.display='none';
+  limparCalc();ORC=null;
+  await loadAll();
+  showTab('dashboard');
+  setTimeout(function(){showBanner('📦 <strong>Frete atribuído para '+motNome+'!</strong><br>O motorista verá a notificação ao abrir o app.','purple',5000);},200);
+}
+
+async function recusarAtrib(atribId,tratId){
+  await Promise.all([
+    db.from('atribuicoes').update({status:'recusado'}).eq('id',atribId),
+    db.from('tratativas').update({status:'pendente',user_id:CU.id}).eq('id',tratId)
+  ]);
+  await loadHist();
+  showBanner('❌ Frete recusado. O gerente poderá reatribuir.','orange',4000);
+}
+  await Promise.all([
+    db.from('atribuicoes').update({status:'aceito'}).eq('id',atribId),
+    db.from('tratativas').update({status:'andamento'}).eq('id',tratId)
+  ]);
+  await loadAll();
+  showBanner('✅ <strong>Frete aceito!</strong> Está em andamento agora.','green',4000);
+}
+
+async function reatribuir(tratId){
+  // Carrega motoristas para reatribuir
+  var r=await db.from('profiles').select('*').eq('role','motorista').order('nome');
+  var mots=r.data||[];
+  if(!mots.length){alert('Nenhum motorista disponível!');return;}
+
+  // Monta lista de seleção inline
+  var trat=await db.from('tratativas').select('*').eq('id',tratId).single();
+  var t=trat.data||{};
+
+  var div=document.createElement('div');
+  div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:flex-end;padding:16px';
+  div.innerHTML='<div style="background:var(--card);border-radius:20px;padding:20px;width:100%;max-height:80vh;overflow-y:auto">'+
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px;color:var(--orange)">👥 REATRIBUIR FRETE</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:16px">'+t.cliente+' — R$'+(t.valor||0).toFixed(0)+'</div>'+
+    mots.map(function(m){
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">'+
+        '<div><div style="font-weight:600">'+(m.nome||m.email)+'</div>'+
+        '<div style="font-size:11px;color:var(--muted)">'+(m.plano==='premium'?'⭐ Premium':'🚚 Normal')+'</div></div>'+
+        '<button class="btn-sm btn-sm-pu" onclick="confirmarReatrib(\''+tratId+'\',\''+m.id+'\',\''+m.nome+'\',this)">Atribuir</button>'+
+      '</div>';
+    }).join('')+
+    '<button class="btn-sm" style="width:100%;margin-top:14px;padding:12px;background:var(--border);color:var(--muted)" onclick="this.closest(\'div[style*=fixed]\').remove()">Cancelar</button>'+
+  '</div>';
+  document.body.appendChild(div);
+}
+
+async function confirmarReatrib(tratId,motId,motNome,btn){
+  btn.textContent='...';btn.disabled=true;
+  // Cancela atribuição anterior
+  await db.from('atribuicoes').update({status:'recusado'}).eq('tratativa_id',tratId);
+  // Cria nova atribuição
+  await db.from('atribuicoes').insert({tratativa_id:tratId,motorista_id:motId,gerente_id:CU.id,status:'pendente'});
+  // Atualiza tratativa para o novo motorista
+  await db.from('tratativas').update({user_id:motId,status:'pendente'}).eq('id',tratId);
+  btn.closest('div[style*="fixed"]').remove();
+  await loadHist();
+  showBanner('📦 <strong>Frete reatribuído para '+motNome+'!</strong>','purple',4000);
+}
+
+// === CLIENTE ===
+var cliOrc=null;
+
+async function loadDashCli(){
+  var r=await db.from('tratativas').select('*').eq('cliente_id',CU.id);
+  var trats=r.data||[];
+  var total=trats.length;
+  var ok=trats.filter(function(t){return t.status==='ganho';}).length;
+  var el=document.getElementById('cli-total');if(el) el.textContent=total;
+  var el2=document.getElementById('cli-ok');if(el2) el2.textContent=ok;
+  // Avisos
+  var ra=await db.from('avisos').select('*').eq('ativo',true).order('created_at',{ascending:false});
+  var avisos=ra.data||[];
+  var aEl=document.getElementById('avisos-cli');
+  if(aEl&&avisos.length){
+    aEl.innerHTML=avisos.map(function(a){
+      return '<div class="banner bn-yellow" style="text-align:left"><div style="font-weight:700;margin-bottom:4px">📢 '+a.titulo+'</div><div style="font-size:12px">'+a.mensagem+'</div></div>';
+    }).join('');
+  }
+}
+
+function gerarOrcCli(){
+  var km=parseFloat(document.getElementById('cli-km').value)||0;
+  if(!km){alert('Informe a distância!');return;}
+  var mult=parseInt(document.getElementById('cli-ida').value)||1;
+  var tempo=parseFloat(document.getElementById('cli-tempo').value)||0;
+  var vc=parseFloat(document.getElementById('cli-compra').value)||0;
+  var vm=parseFloat(document.getElementById('cli-material').value)||0;
+  var obs=document.getElementById('cli-obs').value||'';
+  var pA=document.getElementById('cli-pontoA').value||'Origem';
+  var pB=document.getElementById('cli-pontoB').value||'Destino';
+  var pC=document.getElementById('cli-pontoC').value||'';
+  var kmT=km*mult;
+  var lit=kmT/10; // consumo padrão 10km/L
+  var cComb=lit*6.20;
+  var cMdo=tempo*50;
+  var basePreco=cComb+cMdo+vc+vm;
+  var lucro=basePreco*0.20;
+  var total=basePreco+lucro;
+  var o1=total*0.85,o2=total,o3=total*1.20;
+  var rota=pC?pA.split(',')[0]+' → '+pB.split(',')[0]+' → '+pC.split(',')[0]:pA.split(',')[0]+' → '+pB.split(',')[0];
+  var tipo=orcTipo==='frete'?'Frete':orcTipo==='compra'?'Frete + Compra':'Material + Entrega';
+  cliOrc={rota:rota,pA:pA,pB:pB,pC:pC,kmT:kmT,cComb:cComb,cMdo:cMdo,vc:vc,vm:vm,total:total,o1:o1,o2:o2,o3:o3,tipo:tipo,obs:obs};
+  document.getElementById('cli-orc-box').innerHTML=
+    '<div class="result-box">'+
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:14px;font-weight:700;color:var(--orange);margin-bottom:12px">📍 '+rota+'</div>'+
+    '<div class="result-row"><span style="color:var(--muted)">Tipo</span><span style="font-weight:700">'+tipo+'</span></div>'+
+    '<div class="result-row"><span style="color:var(--muted)">Distância</span><span style="font-weight:700">'+kmT+' km</span></div>'+
+    (vc?'<div class="result-row"><span style="color:var(--muted)">Compra</span><span style="font-weight:700;color:var(--yellow)">R$'+vc.toFixed(2)+'</span></div>':'')+
+    (vm?'<div class="result-row"><span style="color:var(--muted)">Material</span><span style="font-weight:700;color:var(--yellow)">R$'+vm.toFixed(2)+'</span></div>':'')+
+    '<div style="margin:14px 0 8px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px">3 Opções de Preço</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'+
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">ECONÔMICO</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:20px;font-weight:900;color:var(--blue)">R$'+o1.toFixed(0)+'</div></div>'+
+    '<div style="background:linear-gradient(135deg,#1a0a00,#0d1117);border:2px solid var(--orange);border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--orange);font-weight:700;margin-bottom:4px">✅ IDEAL</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:20px;font-weight:900;color:var(--orange)">R$'+o2.toFixed(0)+'</div></div>'+
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center"><div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">PREMIUM</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:20px;font-weight:900;color:var(--green)">R$'+o3.toFixed(0)+'</div></div>'+
+    '</div></div>';
+  document.getElementById('cli-resultado').style.display='block';
+}
+
+async function confirmarPedidoCli(){
+  if(!cliOrc) return;
+  var forma=document.getElementById('cli-pagamento').value;
+  var mes=mesAtual();
+  var r=await db.from('tratativas').insert({
+    user_id:CU.id,cliente_id:CU.id,cliente:CP.nome||CU.email,
+    valor:cliOrc.o2,tipo:cliOrc.tipo,
+    descricao:cliOrc.rota+' ('+cliOrc.kmT+'km)'+(cliOrc.obs?' — '+cliOrc.obs:''),
+    status:'pendente',custo_base:cliOrc.cComb,combustivel:cliOrc.cComb,
+    chance:100,mes_ano:mes,forma_pagamento:forma,pagamento_confirmado:false
+  }).select().single();
+  if(r.error){alert('Erro: '+r.error.message);return;}
+  document.getElementById('cli-resultado').style.display='none';
+  ['cli-pontoA','cli-pontoB','cli-pontoC','cli-km','cli-obs'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  cliOrc=null;
+  await loadDashCli();
+  showTab('cli-historico');
+  setTimeout(function(){showBanner('✅ <strong>Pedido enviado!</strong><br>O gerente irá confirmar e entrar em contato. 🚚','green',5000);},200);
+}
+
+async function loadHistCli(){
+  var r=await db.from('tratativas').select('*').eq('cliente_id',CU.id).order('created_at',{ascending:false});
+  var trats=r.data||[];
+  var el=document.getElementById('cli-lista-hist');
+  if(!trats.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:30px">Nenhum pedido ainda.</div>';return;}
+  var sl={pendente:'⏳ Aguard. confirmação',andamento:'🔄 Em andamento',ganho:'✅ Concluído',perdido:'❌ Cancelado'};
+  var sc={pendente:'s-pendente',andamento:'s-andamento',ganho:'s-ganho',perdido:'s-perdido'};
+  el.innerHTML=trats.map(function(t){
+    var data=new Date(t.created_at).toLocaleDateString('pt-BR');
+    var jaAvaliou=false; // simplificado
+    return '<div class="hist-card">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:8px">'+
+        '<div><div style="font-size:15px;font-weight:700">'+(t.tipo||'Frete')+'</div>'+
+        '<div style="font-size:11px;color:var(--muted)">'+data+'</div></div>'+
+        '<div style="text-align:right"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:900;color:var(--orange)">R$'+(t.valor||0).toFixed(0)+'</div>'+
+        '<span class="status-badge '+(sc[t.status]||'s-pendente')+'">'+(sl[t.status]||t.status)+'</span></div>'+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:8px">'+(t.descricao||'')+'</div>'+
+      (t.pagamento_confirmado?'<div style="font-size:11px;color:var(--green);margin-bottom:8px">✅ Pagamento confirmado</div>':'<div style="font-size:11px;color:var(--yellow);margin-bottom:8px">⏳ Aguardando confirmação de pagamento ('+(t.forma_pagamento||'PIX')+')</div>')+
+      (t.status==='ganho'&&!jaAvaliou?'<button class="btn-sm btn-sm-or" style="width:100%;padding:8px" onclick="abrirAvaliacao(\''+t.id+'\')">⭐ Avaliar motorista</button>':'')+
+    '</div>';
+  }).join('');
+}
+
+async function loadAvisosCli(){
+  var r=await db.from('avisos').select('*').eq('ativo',true).order('created_at',{ascending:false});
+  var avisos=r.data||[];
+  var el=document.getElementById('cli-lista-avisos');
+  if(!avisos.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:30px">Nenhum aviso no momento.</div>';return;}
+  el.innerHTML=avisos.map(function(a){
+    return '<div class="card"><div style="font-size:16px;font-weight:700;margin-bottom:8px;color:var(--orange)">📢 '+a.titulo+'</div><div style="font-size:14px;line-height:1.7">'+a.mensagem+'</div><div style="font-size:11px;color:var(--muted);margin-top:8px">'+new Date(a.created_at).toLocaleDateString('pt-BR')+'</div></div>';
+  }).join('');
+}
+
+function abrirAvaliacao(tratId){
+  var div=document.createElement('div');
+  div.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+  div.innerHTML='<div style="background:var(--card);border-radius:20px;padding:24px;width:100%;max-width:380px">'+
+    '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:700;margin-bottom:16px;text-align:center">⭐ Avaliar Motorista</div>'+
+    '<div style="text-align:center;margin-bottom:16px">'+
+      [1,2,3,4,5].map(function(n){return '<span onclick="selEstrela('+n+',this.parentNode)" style="font-size:32px;cursor:pointer;opacity:0.4" data-star="'+n+'">★</span>';}).join('')+
+    '</div>'+
+    '<div class="form-group"><label>Comentário (opcional)</label><textarea id="av-comentario" placeholder="Como foi o serviço?"></textarea></div>'+
+    '<button class="btn btn-green" onclick="enviarAvaliacao(\''+tratId+'\',this.closest(\'div[style*=fixed]\'))">✅ Enviar Avaliação</button>'+
+    '<button class="btn btn-outline" onclick="this.closest(\'div[style*=fixed]\').remove()">Cancelar</button>'+
+  '</div>';
+  document.body.appendChild(div);
+}
+
+var estrelaSel=0;
+function selEstrela(n,container){
+  estrelaSel=n;
+  container.querySelectorAll('[data-star]').forEach(function(el){
+    el.style.opacity=parseInt(el.getAttribute('data-star'))<=n?'1':'0.3';
+  });
+}
+
+async function enviarAvaliacao(tratId,modal){
+  if(!estrelaSel){alert('Selecione uma nota!');return;}
+  var coment=document.getElementById('av-comentario').value;
+  var{data:trat}=await db.from('tratativas').select('user_id').eq('id',tratId).single();
+  await db.from('avaliacoes').insert({
+    tratativa_id:tratId,cliente_id:CU.id,
+    motorista_id:trat&&trat.user_id,
+    estrelas:estrelaSel,comentario:coment
+  });
+  modal.remove();estrelaSel=0;
+  showBanner('⭐ Avaliação enviada! Obrigado.','green',3000);
+}
+
+// === GERENTE: AVISOS E APROVAÇÃO ===
+async function publicarAviso(){
+  var titulo=document.getElementById('aviso-titulo').value.trim();
+  var msg=document.getElementById('aviso-msg').value.trim();
+  if(!titulo||!msg){alert('Preencha título e mensagem!');return;}
+  await db.from('avisos').insert({titulo:titulo,mensagem:msg,ativo:true});
+  document.getElementById('aviso-titulo').value='';
+  document.getElementById('aviso-msg').value='';
+  showBanner('📢 Aviso publicado para todos os clientes!','green',3000);
+}
+
+async function carregarAprovacoes(){
+  var r=await db.from('profiles').select('*').eq('tipo','motorista').eq('aprovado',false);
+  var pend=r.data||[];
+  var sec=document.getElementById('sec-aprovacao');
+  if(pend.length>0){
+    sec.style.display='block';
+    document.getElementById('lista-aprovacao').innerHTML=pend.map(function(u){
+      return '<div class="hist-card" style="border-color:var(--yellow);margin-bottom:10px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+          '<div><div style="font-weight:700">'+(u.nome||u.email)+'</div><div style="font-size:11px;color:var(--muted)">'+u.email+'</div><div style="font-size:11px;color:var(--muted)">📱 '+(u.telefone||'—')+'</div></div>'+
+          '<span class="status-badge s-pendente">⏳ Pendente</span>'+
+        '</div>'+
+        '<div style="font-size:12px;color:var(--yellow);margin-bottom:10px">Documentos enviados pelo WhatsApp</div>'+
+        '<div style="display:flex;gap:8px">'+
+          '<button class="btn-sm btn-sm-gr" style="flex:1;padding:10px" onclick="aprovarMotorista(\''+u.id+'\')">✅ APROVAR</button>'+
+          '<button class="btn-sm btn-sm-re" onclick="rejeitarMotorista(\''+u.id+'\')">❌ Rejeitar</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }else{sec.style.display='none';}
+
+  // Pedidos de clientes aguardando pagamento
+  var rp=await db.from('tratativas').select('*,profiles!tratativas_cliente_id_fkey(nome,telefone)').eq('pagamento_confirmado',false).eq('status','pendente').not('cliente_id','is',null);
+  var pedidos=rp.data||[];
+  var elP=document.getElementById('lista-pedidos-pag');
+  if(!pedidos.length){elP.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px">Nenhum pedido pendente.</div>';return;}
+  elP.innerHTML=pedidos.map(function(p){
+    var cli=p.profiles||{};
+    return '<div class="hist-card" style="border-color:var(--blue);margin-bottom:10px">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:8px">'+
+        '<div><div style="font-weight:700">'+(cli.nome||p.cliente||'—')+'</div>'+
+        '<div style="font-size:11px;color:var(--muted)">'+p.tipo+' · '+(p.forma_pagamento||'PIX')+'</div></div>'+
+        '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:18px;font-weight:900;color:var(--green)">R$'+(p.valor||0).toFixed(0)+'</div>'+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">'+(p.descricao||'')+'</div>'+
+      '<button class="btn-sm btn-sm-gr" style="width:100%;padding:10px;font-size:13px" onclick="confirmarPagamento(\''+p.id+'\')">✅ CONFIRMAR PAGAMENTO E ATRIBUIR</button>'+
+    '</div>';
+  }).join('');
+}
+
+async function aprovarMotorista(uid){
+  await db.from('profiles').update({aprovado:true}).eq('id',uid);
+  await carregarAprovacoes();
+  await carregarEquipe();
+  showBanner('✅ Motorista aprovado!','green',3000);
+}
+
+async function rejeitarMotorista(uid){
+  await db.from('profiles').update({aprovado:false,role:'rejeitado'}).eq('id',uid);
+  await carregarAprovacoes();
+  showBanner('❌ Motorista rejeitado.','orange',3000);
+}
+
+async function confirmarPagamento(tratId){
+  await db.from('tratativas').update({pagamento_confirmado:true}).eq('id',tratId);
+  // Abre painel de atribuição
+  var r=await db.from('tratativas').select('*').eq('id',tratId).single();
+  ORC={
+    cliente:r.data.cliente,rota:r.data.descricao,kmT:0,
+    cComb:r.data.combustivel||0,cBase:r.data.custo_base||0,
+    o2:r.data.valor||0,tipo:r.data.tipo,obs:'',tratativa_id:tratId
+  };
+  await carregarAprovacoes();
+  showBanner('✅ Pagamento confirmado! Agora atribua a um motorista na aba <strong>Calcular</strong>.','green',5000);
+  showTab('calcular');
+}
+var ultimoContAtrib=0;
+var audioCtx=null;
+
+function tocarSomNotif(){
+  try{
+    if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    // Toca 2 beeps curtos
+    [0, 0.3].forEach(function(delay){
+      var osc=audioCtx.createOscillator();
+      var gain=audioCtx.createGain();
+      osc.connect(gain);gain.connect(audioCtx.destination);
+      osc.frequency.value=880;
+      osc.type='sine';
+      gain.gain.setValueAtTime(0.5,audioCtx.currentTime+delay);
+      gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+delay+0.3);
+      osc.start(audioCtx.currentTime+delay);
+      osc.stop(audioCtx.currentTime+delay+0.3);
+    });
+  }catch(e){}
+}
+
+async function verificarNovasAtribuicoes(){
+  if(isGer()) return; // Só para motoristas
+  var r=await db.from('atribuicoes').select('*').eq('motorista_id',CU.id).eq('status','pendente');
+  var qtd=(r.data||[]).length;
+  if(qtd>ultimoContAtrib && ultimoContAtrib>=0){
+    // Chegou novo frete!
+    tocarSomNotif();
+    // Atualiza badge na aba histórico
+    var nb=document.getElementById('nb-historico');
+    if(nb && qtd>0){
+      nb.innerHTML='<div class="nav-icon">📋</div>Histórico<span style="background:var(--red);color:white;border-radius:50%;width:14px;height:14px;font-size:8px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-left:2px">'+qtd+'</span>';
+    }
+    // Recarrega histórico se estiver na aba
+    if(document.getElementById('s-historico').classList.contains('active')){
+      await loadHist();
+    }
+  } else if(qtd===0){
+    // Remove badge
+    var nb=document.getElementById('nb-historico');
+    if(nb) nb.innerHTML='<div class="nav-icon">📋</div>Histórico';
+  }
+  ultimoContAtrib=qtd;
+}
+
+function iniciarPolling(){
+  // Verifica a cada 30 segundos
+  setInterval(verificarNovasAtribuicoes, 30000);
+  // Primeira verificação após 5 segundos do login
+  setTimeout(verificarNovasAtribuicoes, 5000);
+}
+
+async function finalizarServ(id){
+  var r=await db.from('tratativas').select('*').eq('id',id).single();
+  var t=r.data;
+  if(!t){alert('Não encontrado!');return;}
+  var recebido=t.valor||0;
+  var combustivel=t.combustivel||0;
+  // Buscar plano do motorista dono da tratativa
+  var rp=await db.from('profiles').select('plano,role').eq('id',t.user_id).single();
+  var prof=rp.data||{};
+  var semTaxa=(prof.plano==='premium'||prof.role==='gerente'||prof.role==='admin');
+  var taxa=semTaxa?0:recebido*0.12;
+  var lucro=recebido-combustivel-taxa;
+  var mes=t.mes_ano||mesAtual();
+  await Promise.all([
+    db.from('tratativas').update({status:'ganho'}).eq('id',id),
+    db.from('servicos').insert({
+      user_id:t.user_id,
+      descricao:t.cliente+' — '+(t.tipo||'Frete')+' | '+(t.descricao||''),
+      recebido:recebido,combustivel:combustivel,outros:0,
+      taxa_admin:taxa,lucro_motorista:lucro,mes_ano:mes
+    })
+  ]);
+  await loadAll();
+  showTab('dashboard');
+  setTimeout(function(){
+    var msg='🎉 <strong>Serviço finalizado!</strong><br>';
+    msg+='💰 Recebido: R$'+recebido.toFixed(2)+'<br>';
+    msg+='⛽ Combustível: R$'+combustivel.toFixed(2)+'<br>';
+    if(taxa>0) msg+='📤 Taxa VapFretes: R$'+taxa.toFixed(2)+'<br>';
+    msg+='📈 <strong>Lucro: R$'+lucro.toFixed(2)+'</strong>';
+    showBanner(msg,'green',6000);
+  },200);
+}
+
+// === ORS ===
+var ORS='eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjQ5ODQ2MDdjZGI0YzRhNDdhNDI0OTQ2NjQzZWQyNTQ3IiwiaCI6Im11cm11cjY0In0=';
+var cA=null,cB=null,cC=null,acT={};
+async function acSearch(iId,lId){
+  var val=document.getElementById(iId).value;
+  var lista=document.getElementById(lId);
+  if(val.length<4){lista.classList.remove('show');return;}
+  clearTimeout(acT[iId]);
+  acT[iId]=setTimeout(async function(){
+    try{
+      var r=await fetch('https://api.openrouteservice.org/geocode/autocomplete?api_key='+ORS+'&text='+encodeURIComponent(val)+'&boundary.country=BR&size=5');
+      var d=await r.json();
+      if(!d.features||!d.features.length){lista.classList.remove('show');return;}
+      lista.innerHTML=d.features.map(function(f){
+        var lbl=f.properties.label;
+        var c=f.geometry.coordinates;
+        return '<div class="ac-item" onclick="selLoc(\''+iId+'\',\''+lId+'\',\''+lbl.replace(/'/g,"\\'")+'\',' +c[0]+','+c[1]+')">'+lbl+'</div>';
+      }).join('');
+      lista.classList.add('show');
+    }catch(e){lista.classList.remove('show');}
+  },400);
+}
+function selLoc(iId,lId,lbl,lng,lat){
+  document.getElementById(iId).value=lbl;
+  document.getElementById(lId).classList.remove('show');
+  if(iId==='pontoA') cA=[lng,lat];
+  if(iId==='pontoB') cB=[lng,lat];
+  if(iId==='pontoC') cC=[lng,lat];
+  if(iId==='cli-pontoA') cA=[lng,lat];
+  if(iId==='cli-pontoB') cB=[lng,lat];
+  if(iId==='cli-pontoC') cC=[lng,lat];
+}
+
+async function calcDistCli(){
+  var tA=document.getElementById('cli-pontoA').value.trim();
+  var tB=document.getElementById('cli-pontoB').value.trim();
+  if(!tA||!tB){alert('Preencha Ponto A e Ponto B!');return;}
+  var btn=document.getElementById('cli-btnDist');btn.textContent='⏳...';btn.disabled=true;
+  var res=document.getElementById('cli-rota-res');
+  try{
+    if(!cA) cA=await geoC(tA);if(!cB) cB=await geoC(tB);
+    var r1=await fetch('https://api.openrouteservice.org/v2/directions/driving-car?api_key='+ORS+'&start='+cA[0]+','+cA[1]+'&end='+cB[0]+','+cB[1]);
+    var d1=await r1.json();var s1=d1.features[0].properties.segments[0];
+    var kmT=s1.distance/1000;var min=Math.round(s1.duration/60);
+    var tC=document.getElementById('cli-pontoC').value.trim();
+    if(tC){if(!cC) cC=await geoC(tC);var r2=await fetch('https://api.openrouteservice.org/v2/directions/driving-car?api_key='+ORS+'&start='+cB[0]+','+cB[1]+'&end='+cC[0]+','+cC[1]);var d2=await r2.json();var s2=d2.features[0].properties.segments[0];kmT+=s2.distance/1000;min+=Math.round(s2.duration/60);}
+    var km=kmT.toFixed(1);var tempo=min>=60?Math.floor(min/60)+'h'+(min%60?min%60+'min':''):min+' min';
+    document.getElementById('cli-km').value=km;
+    res.style.display='block';res.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700;color:var(--orange)">📍 Rota calculada!</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:24px;font-weight:900">'+km+' km · '+tempo+'</div></div>';
+    cA=null;cB=null;cC=null;
+  }catch(e){res.style.display='block';res.innerHTML='<div style="color:var(--red)">⚠️ Verifique os endereços.</div>';}
+  btn.textContent='📍 CALCULAR DISTÂNCIA';btn.disabled=false;
+}
+async function geoC(texto){
+  var r=await fetch('https://api.openrouteservice.org/geocode/search?api_key='+ORS+'&text='+encodeURIComponent(texto)+'&boundary.country=BR&size=1');
+  var d=await r.json();
+  if(!d.features||!d.features.length) throw new Error('Não encontrado');
+  return d.features[0].geometry.coordinates;
+}
+async function calcDist(){
+  var tA=document.getElementById('pontoA').value.trim();
+  var tB=document.getElementById('pontoB').value.trim();
+  var tC=document.getElementById('pontoC').value.trim();
+  if(!tA||!tB){alert('Preencha Ponto A e Ponto B!');return;}
+  var btn=document.getElementById('btnDist');
+  btn.textContent='⏳ Calculando...';btn.disabled=true;
+  var res=document.getElementById('rota-res');
+  try{
+    if(!cA) cA=await geoC(tA);
+    if(!cB) cB=await geoC(tB);
+    var kmT=0,tMin=0;
+    var r1=await fetch('https://api.openrouteservice.org/v2/directions/driving-car?api_key='+ORS+'&start='+cA[0]+','+cA[1]+'&end='+cB[0]+','+cB[1]);
+    var d1=await r1.json();
+    var s1=d1.features[0].properties.segments[0];
+    kmT+=s1.distance/1000;tMin+=s1.duration/60;
+    var rotaTxt=tA.split(',')[0]+' → '+tB.split(',')[0];
+    if(tC){
+      if(!cC) cC=await geoC(tC);
+      var r2=await fetch('https://api.openrouteservice.org/v2/directions/driving-car?api_key='+ORS+'&start='+cB[0]+','+cB[1]+'&end='+cC[0]+','+cC[1]);
+      var d2=await r2.json();
+      var s2=d2.features[0].properties.segments[0];
+      kmT+=s2.distance/1000;tMin+=s2.duration/60;
+      rotaTxt+=' → '+tC.split(',')[0];
+    }
+    var km=kmT.toFixed(1);
+    var min=Math.round(tMin);
+    var tempo=min>=60?Math.floor(min/60)+'h'+(min%60?min%60+'min':''):min+' min';
+    document.getElementById('kmTotal').value=km;
+    res.style.display='block';
+    res.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center">'+
+      '<div><div style="font-weight:700;color:var(--orange)">📍 Rota calculada!</div>'+
+      '<div style="color:var(--muted);font-size:12px;margin-top:3px">'+rotaTxt+'</div></div>'+
+      '<div style="text-align:right"><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:28px;font-weight:900">'+km+' km</div>'+
+      '<div style="font-size:12px;color:var(--muted)">⏱️ ~'+tempo+'</div></div></div>';
+    cA=null;cB=null;cC=null;
+  }catch(e){
+    res.style.display='block';
+    res.innerHTML='<div style="color:var(--red)">⚠️ Não foi possível calcular. Verifique os endereços.</div>';
+  }
+  btn.textContent='📍 CALCULAR DISTÂNCIA';btn.disabled=false;
+}
+document.addEventListener('click',function(e){
+  ['A','B','C'].forEach(function(p){
+    if(!e.target.closest('#ponto'+p)&&!e.target.closest('#lista'+p)){var el=document.getElementById('lista'+p);if(el)el.classList.remove('show');}
+  });
+});
+
+// === EQUIPE ===
+async function loadEquipe(){
+  var r=await db.from('profiles').select('*').order('nome');
+  var users=r.data||[];
+  var prems=users.filter(function(u){return u.plano==='premium';});
+  document.getElementById('lista-usuarios').innerHTML=users.map(function(u){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">'+
+      '<div><div style="font-weight:600">'+(u.nome||u.email)+'</div>'+
+      '<div style="font-size:11px;color:var(--muted)">'+u.email+'</div>'+
+      '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:'+(u.plano==='premium'?'#3b0764':'var(--surface)')+';color:'+(u.plano==='premium'?'var(--purple)':'var(--muted)')+'">'+(u.plano==='premium'?'⭐ Premium':'🚚 Normal')+'</span></div>'+
+      '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">'+
+        '<select style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 8px;color:var(--text);font-size:12px;font-family:\'Barlow\',sans-serif" onchange="alterRole(\''+u.id+'\',this.value)">'+
+          '<option value="motorista"'+(u.role==='motorista'?' selected':'')+'>🚚 Motorista</option>'+
+          '<option value="admin"'+(u.role==='admin'?' selected':'')+'>⚙️ Admin</option>'+
+          '<option value="gerente"'+(u.role==='gerente'?' selected':'')+'>👑 Gerente</option>'+
+        '</select>'+
+        '<button style="background:'+(u.plano==='premium'?'var(--red)':'var(--purple)')+';border:none;border-radius:8px;padding:6px 12px;color:white;font-size:11px;font-weight:700;cursor:pointer;font-family:\'Barlow\',sans-serif" onclick="togglePrem(\''+u.id+'\',\''+(u.plano||'normal')+'\')">'+
+          (u.plano==='premium'?'⬇️ Remover Premium':'⭐ Tornar Premium')+
+        '</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  // Select mensalidades
+  var sel=document.getElementById('sel-mens-mot');
+  sel.innerHTML='<option value="">Selecione...</option>';
+  prems.forEach(function(m){var o=document.createElement('option');o.value=m.id;o.textContent=m.nome;sel.appendChild(o);});
+  // Todos os serviços (visão gerente)
+  var rs=await db.from('servicos').select('*,profiles(nome)').order('created_at',{ascending:false}).limit(30);
+  var servs=rs.data||[];
+  var el=document.getElementById('lista-todos-servicos');
+  if(!servs.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:13px;padding:12px">Nenhum serviço.</div>';return;}
+  el.innerHTML=servs.map(function(s){
+    var data=new Date(s.created_at).toLocaleDateString('pt-BR');
+    return '<div style="padding:10px 0;border-bottom:1px solid var(--border)">'+
+      '<div style="display:flex;justify-content:space-between">'+
+        '<div><div style="font-size:13px;font-weight:600">'+(s.descricao||'—').substring(0,40)+'</div>'+
+        '<div style="font-size:11px;color:var(--orange)">🚚 '+(s.profiles&&s.profiles.nome||'—')+' · '+data+'</div></div>'+
+        '<div style="text-align:right"><div style="font-weight:700;color:var(--green)">+R$'+(s.lucro_motorista||0).toFixed(0)+'</div>'+
+        (s.taxa_admin>0?'<div style="font-size:11px;color:var(--purple)">📤R$'+s.taxa_admin.toFixed(0)+'</div>':'')+
+      '</div></div>'+
+    '</div>';
+  }).join('');
+}
+async function alterRole(id,role){await db.from('profiles').update({role:role}).eq('id',id);}
+async function togglePrem(id,plano){
+  var novo=plano==='premium'?'normal':'premium';
+  await db.from('profiles').update({plano:novo}).eq('id',id);
+  await loadEquipe();
+}
+async function registrarMens(){
+  var motId=document.getElementById('sel-mens-mot').value;
+  var valor=parseFloat(document.getElementById('val-mens').value)||0;
+  if(!motId||!valor){alert('Selecione o motorista e o valor!');return;}
+  await db.from('mensalidades').insert({motorista_id:motId,valor:valor,mes_ano:mesAtual()});
+  document.getElementById('val-mens').value='';
+  showBanner('✅ Mensalidade de R$'+valor.toFixed(2)+' registrada!','green',3000);
+  await carregarGer();
+}
+
+// === AGENTE ===
+var claudeKey=localStorage.getItem('claudeKey')||'';
+var chatHist=[];
+function salvarKey(){var k=document.getElementById('claudeKey').value.trim();if(!k)return;claudeKey=k;localStorage.setItem('claudeKey',k);document.getElementById('claude-status').textContent='✅ Agente ativo!';document.getElementById('claude-status').style.color='var(--green)';}
+function addMsg(text,isUser){
+  var box=document.getElementById('chatBox');
+  var div=document.createElement('div');
+  div.className='msg '+(isUser?'msg-user':'msg-agent');
+  div.innerHTML=isUser?'<div class="msg-bubble">'+text+'</div>':'<div class="msg-avatar">🚚</div><div class="msg-bubble">'+text+'</div>';
+  box.appendChild(div);box.scrollTop=box.scrollHeight;
+}
+async function sendMsg(){
+  var input=document.getElementById('chatInput');
+  var text=input.value.trim();if(!text)return;
+  if(!claudeKey){addMsg('⚠️ Insira sua chave Claude API!',false);return;}
+  input.value='';addMsg(text,true);
+  chatHist.push({role:'user',content:text});
+  var box=document.getElementById('chatBox');
+  var typing=document.createElement('div');typing.id='typing';typing.className='msg msg-agent';
+  typing.innerHTML='<div class="msg-avatar">🚚</div><div class="msg-bubble"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>';
+  box.appendChild(typing);box.scrollTop=box.scrollHeight;
+  try{
+    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Você é o agente VapFretes, especialista em fretes e logística no Brasil. Seja direto e prático, máximo 3 parágrafos. Use emojis. Português brasileiro informal.',messages:chatHist})});
+    var data=await res.json();
+    var reply=(data.content&&data.content[0]&&data.content[0].text)||'Desculpe, tente novamente.';
+    document.getElementById('typing').remove();addMsg(reply,false);
+    chatHist.push({role:'assistant',content:reply});
+  }catch(e){var t=document.getElementById('typing');if(t)t.remove();addMsg('⚠️ Erro de conexão.',false);}
+}
+
+// Inicializa
+(async function(){
+  try{
+    await init();
+  }catch(e){
+    console.error('Init error:',e.message);
+  }
+})();
+</script>
+</body>
+</html>
