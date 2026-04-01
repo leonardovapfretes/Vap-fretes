@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body style="background:#111;color:white;padding:20px;font-family:sans-serif">
+<h2 style="color:#f97316">VapFretes — Teste Login</h2>
+<input id="email" type="email" placeholder="email" style="display:block;padding:10px;margin:8px 0;width:100%;box-sizing:border-box"><br>
+<input id="senha" type="password" placeholder="senha" style="display:block;padding:10px;margin:8px 0;width:100%;box-sizing:border-box"><br>
+<button onclick="testar()" style="background:#f97316;color:white;padding:14px;width:100%;border:none;font-size:16px;font-weight:700;cursor:pointer">ENTRAR</button>
+<div id="resultado" style="margin-top:16px;padding:12px;border-radius:8px"></div>
+
+<script>
+const { createClient } = supabase;
+const db = createClient('https://atptmrycmvpocllqwgzo.supabase.co','sb_publishable_aPK1_Jhh0hQQQbQ56UEwOw_wOEOjmQs');
+const res = document.getElementById('resultado');
+
+async function testar() {
+  const email = document.getElementById('email').value.trim();
+  const senha = document.getElementById('senha').value;
+  res.style.background = '#333';
+  res.textContent = 'Tentando...';
+  try {
+    const { data, error } = await db.auth.signInWithPassword({ email, password: senha });
+    if (error) {
+      res.style.background = '#4c0519';
+      res.style.color = '#ef4444';
+      res.textContent = 'Erro: ' + error.message;
+    } else {
+      res.style.background = '#14532d';
+      res.style.color = '#22c55e';
+      res.textContent = '✅ Login OK! Usuário: ' + data.user.email;
+    }
+  } catch(e) {
+    res.style.background = '#4c0519';
+    res.style.color = '#ef4444';
+    res.textContent = 'Exceção: ' + e.message;
+  }
+}
+</script>
+</body>
+</html>
