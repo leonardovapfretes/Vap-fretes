@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>VapFretes - Logistica de Fretes</title>
+  <meta name="description" content="App de logistica de fretes com interface moderna e responsiva">
+  <meta name="theme-color" content="#1a1a1f">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Barlow', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            background: 'var(--background)',
+            foreground: 'var(--foreground)',
+            card: 'var(--card)',
+            'card-foreground': 'var(--card-foreground)',
+            primary: 'var(--primary)',
+            'primary-foreground': 'var(--primary-foreground)',
+            secondary: 'var(--secondary)',
+            'secondary-foreground': 'var(--secondary-foreground)',
+            muted: 'var(--muted)',
+            'muted-foreground': 'var(--muted-foreground)',
+            border: 'var(--border)',
+            success: 'var(--success)',
+            warning: 'var(--warning)',
+            destructive: 'var(--destructive)',
+          },
+          borderRadius: {
+            '2xl': '1rem',
+            '3xl': '1.5rem',
+          },
+        },
+      },
+    }
+  </script>
+  
+  <style>
+    :root {
+      /* Light Theme */
+      --background: #fafafa;
+      --foreground: #1a1a1f;
+      --card: #ffffff;
+      --card-foreground: #1a1a1f;
+      --primary: #f97316;
+      --primary-foreground: #ffffff;
+      --secondary: #f4f4f5;
+      --secondary-foreground: #1a1a1f;
+      --muted: #f4f4f5;
+      --muted-foreground: #707070;
+      --border: #e4e4e7;
+      --success: #22c55e;
+      --warning: #eab308;
+      --destructive: #ef4444;
+    }
+    
+    .dark {
+      /* Dark Theme - Grafite */
+      --background: #1a1a1f;
+      --foreground: #fafafa;
+      --card: #242428;
+      --card-foreground: #fafafa;
+      --primary: #f97316;
+      --primary-foreground: #1a1a1f;
+      --secondary: #2a2a30;
+      --secondary-foreground: #fafafa;
+      --muted: #3a3a42;
+      --muted-foreground: #a0a0a8;
+      --border: #3a3a42;
+      --success: #22c55e;
+      --warning: #eab308;
+      --destructive: #ef4444;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Barlow', system-ui, sans-serif;
+      background: var(--background);
+      color: var(--foreground);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    
+    /* Glassmorphism */
+    .glass {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .glass-dark {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .glass-light {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    
+    .dark .glass-light {
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    /* Snap Carousel */
+    .snap-carousel {
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .snap-carousel > * {
+      scroll-snap-align: start;
+    }
+    
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: var(--muted);
+      border-radius: 4px;
+    }
+    
+    /* Skeleton Animation */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    
+    .skeleton {
+      background: linear-gradient(90deg, var(--muted) 25%, var(--secondary) 50%, var(--muted) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    
+    /* Pulse Animation */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+    
+    .pulse-status::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse-ring 1.5s ease-out infinite;
+    }
+    
+    /* Safe Area */
+    .pt-safe { padding-top: max(1rem, env(safe-area-inset-top)); }
+    .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+    
+    /* Progress Bar */
+    .progress-bar {
+      height: 8px;
+      background: var(--secondary);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 9999px;
+      transition: width 0.3s ease;
+    }
+    
+    /* Button Styles */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-weight: 700;
+      border-radius: 1rem;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+      outline: none;
+    }
+    
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+    
+    .btn-primary:hover { filter: brightness(1.1); }
+    
+    .btn-secondary {
+      background: var(--secondary);
+      color: var(--foreground);
+    }
+    
+    .btn-secondary:hover { background: var(--muted); }
+    
+    .btn-icon {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+    }
+    
+    /* Input Styles */
+    .input {
+      width: 100%;
+      height: 44px;
+      padding: 0 1rem;
+      background: var(--secondary);
+      border: none;
+      border-radius: 0.75rem;
+      color: var(--foreground);
+      font-size: 0.875rem;
+      outline: none;
+      transition: box-shadow 0.2s;
+    }
+    
+    .input:focus {
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+    
+    .input::placeholder {
+      color: var(--muted-foreground);
+      opacity: 0.7;
+    }
+    
+    /* Card Styles */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1rem;
+    }
+    
+    /* Tab Styles */
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      padding: 0.25rem;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 9999px;
+      backdrop-filter: blur(20px);
+    }
+    
+    .tab {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.625rem;
+      font-weight: 700;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: transparent;
+      color: var(--muted-foreground);
+    }
+    
+    .tab.active {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+    
+    /* Hidden class */
+    .hidden { display: none !important; }
+    
+    /* Modal/Dialog */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    
+    .modal {
+      background: var(--card);
+      border-radius: 1.5rem;
+      max-width: 28rem;
+      width: 100%;
+      max-height: 90vh;
+      overflow: hidden;
+    }
+    
+    .modal-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .modal-content {
+      padding: 1rem;
+      overflow-y: auto;
+      max-height: 60vh;
+    }
+    
+    /* Bottom Sheet Styles */
+    .bottom-sheet {
+      transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .bottom-sheet.collapsed { height: 100px; }
+    .bottom-sheet.partial { height: 45%; }
+    .bottom-sheet.expanded { height: 85%; }
+    
+    /* Search Overlay */
+    .search-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 26, 31, 0.95);
+      backdrop-filter: blur(8px);
+      z-index: 60;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    
+    .search-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    /* FAB Styles */
+    .fab {
+      position: fixed;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: var(--primary-foreground);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(249, 115, 22, 0.3);
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .fab:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 24px rgba(249, 115, 22, 0.4);
+    }
+    
+    .fab:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="min-h-screen">
+    <!-- Profile Switcher -->
+    <div class="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+      <div class="tabs">
+        <button class="tab active" data-profile="cliente">Cliente</button>
+        <button class="tab" data-profile="motorista">Motorista</button>
+        <button class="tab" data-profile="gerente">Gerente</button>
+      </div>
+    </div>
+
+    <!-- ==================== CLIENT VIEW ==================== -->
+    <div id="view-cliente" class="view">
+      <!-- Map Background - FULL SCREEN -->
+      <div class="fixed inset-0 bg-gradient-to-br from-secondary to-muted">
+        <!-- Grid Pattern -->
+        <svg class="absolute inset-0 w-full h-full opacity-20">
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)"/>
+        </svg>
+        <!-- Roads -->
+        <svg class="absolute inset-0 w-full h-full" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid slice">
+          <path d="M 0 200 Q 100 180 200 200 T 400 200" stroke="rgba(249, 115, 22, 0.3)" stroke-width="8" fill="none"/>
+          <path d="M 200 0 Q 180 100 200 200 T 200 400" stroke="rgba(249, 115, 22, 0.2)" stroke-width="6" fill="none"/>
+          <path d="M 50 50 Q 150 100 200 200 T 350 350" stroke="rgba(249, 115, 22, 0.15)" stroke-width="4" fill="none"/>
+        </svg>
+        <!-- Markers -->
+        <div class="absolute top-1/3 left-1/4 transform -translate-x-1/2 -translate-y-1/2">
+          <div class="relative">
+            <div class="w-4 h-4 bg-primary rounded-full shadow-lg animate-pulse"></div>
+            <div class="absolute -inset-2 bg-primary/20 rounded-full animate-ping"></div>
+          </div>
+        </div>
+        <div class="absolute top-2/3 right-1/4 transform translate-x-1/2 -translate-y-1/2">
+          <div class="w-4 h-4 bg-success rounded-full shadow-lg"></div>
+        </div>
+      </div>
+
+      <!-- Top Header - Minimal -->
+      <div class="fixed top-16 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+        <!-- Logo badge -->
+        <div class="glass-dark rounded-full px-4 py-2 flex items-center gap-2 pointer-events-auto">
+          <div class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></div>
+          <span class="text-[10px] font-bold tracking-widest text-primary uppercase">VapFretes</span>
+        </div>
+
+        <!-- Search trigger button -->
+        <button id="search-trigger" class="glass-dark rounded-full px-4 py-2 flex items-center gap-2 pointer-events-auto hover:bg-white/10 transition-colors">
+          <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span class="text-xs text-foreground">Para onde?</span>
+        </button>
+      </div>
+
+      <!-- Left Map Controls -->
+      <div class="fixed left-4 bottom-32 z-20 flex flex-col gap-2">
+        <button class="w-10 h-10 rounded-full glass-dark flex items-center justify-center hover:bg-white/10 transition-colors">
+          <svg class="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        </button>
+      </div>
+
+      <!-- FAB - New Freight -->
+      <button id="fab-new-freight" class="fab right-4 bottom-32 z-20">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      </button>
+
+      <!-- Bottom Sheet - Draggable -->
+      <div id="client-bottom-sheet" class="bottom-sheet collapsed fixed bottom-0 left-0 right-0 z-30">
+        <div class="h-full glass-light rounded-t-3xl flex flex-col overflow-hidden border-t border-white/10">
+          <!-- Drag handle area -->
+          <div id="sheet-handle" class="flex-shrink-0 pt-3 pb-2 px-4 cursor-grab active:cursor-grabbing touch-none">
+            <div class="w-10 h-1 bg-border/60 rounded-full mx-auto"></div>
+            
+            <!-- Collapsed state preview -->
+            <div id="collapsed-preview" class="flex items-center justify-between mt-3">
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 bg-primary/10 rounded-full px-3 py-1.5">
+                  <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                  <span class="text-xs font-bold text-primary">1 ativo</span>
+                </div>
+                <span class="text-xs text-muted-foreground">Arraste para ver mais</span>
+              </div>
+              <svg class="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+            </div>
+          </div>
+
+          <!-- Sheet content - Only visible when not collapsed -->
+          <div id="sheet-content" class="hidden flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar">
+            <!-- Quick actions -->
+            <div class="flex items-center gap-3 mb-4">
+              <button class="btn btn-primary flex-1 h-12 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Solicitar Frete
+              </button>
+              <button class="btn btn-secondary btn-icon h-12 w-12">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </button>
+            </div>
+
+            <!-- Active freights section -->
+            <div class="mb-4">
+              <h3 class="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+                Fretes Ativos
+              </h3>
+              <div class="space-y-3">
+                <div class="p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="px-2 py-1 rounded-full bg-primary/20 text-primary text-[10px] font-bold uppercase">Em transito</span>
+                    <span class="text-lg font-black text-foreground">R$150</span>
+                  </div>
+                  <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-sm">
+                      <div class="w-2 h-2 rounded-full bg-primary flex-shrink-0"></div>
+                      <span class="text-muted-foreground truncate">Rua das Flores, 100 - Jacarei</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                      <div class="w-2 h-2 rounded-full bg-success flex-shrink-0"></div>
+                      <span class="text-muted-foreground truncate">Av. Brasil, 500 - SJC</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-between mt-3 pt-3 border-t border-border/30">
+                    <div class="flex items-center gap-2">
+                      <div class="w-6 h-6 rounded-full bg-secondary flex items-center justify-center">
+                        <span class="text-[10px] font-bold">JS</span>
+                      </div>
+                      <span class="text-xs text-muted-foreground">Joao Silva</span>
+                    </div>
+                    <span class="text-xs font-medium text-primary">25 min restantes</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- History section - Only in expanded state -->
+            <div id="history-section" class="hidden">
+              <h3 class="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Historico Recente
+              </h3>
+              <div class="space-y-3">
+                <!-- History Card 1 -->
+                <div class="p-4 rounded-2xl bg-card border border-border/50">
+                  <div class="flex items-start justify-between mb-3">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-success/10 text-success">Entregue</span>
+                    <span class="text-lg font-black text-foreground">R$180</span>
+                  </div>
+                  <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 rounded-full bg-primary"></div>
+                      <span class="text-sm text-foreground truncate">Centro, Jacarei</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 rounded-full bg-success"></div>
+                      <span class="text-sm text-muted-foreground truncate">Jardim Satelite</span>
+                    </div>
+                  </div>
+                  <div class="mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground">Ontem</div>
+                </div>
+                
+                <!-- History Card 2 -->
+                <div class="p-4 rounded-2xl bg-card border border-border/50">
+                  <div class="flex items-start justify-between mb-3">
+                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-success/10 text-success">Entregue</span>
+                    <span class="text-lg font-black text-foreground">R$220</span>
+                  </div>
+                  <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 rounded-full bg-primary"></div>
+                      <span class="text-sm text-foreground truncate">Vila Industrial</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 rounded-full bg-success"></div>
+                      <span class="text-sm text-muted-foreground truncate">Urbanova, SJC</span>
+                    </div>
+                  </div>
+                  <div class="mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground">02/04/2026</div>
+                </div>
+
+                <!-- View all button -->
+                <button class="w-full py-3 rounded-xl border border-dashed border-border/50 flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                  <span class="text-sm font-medium">Ver todo historico</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Expand hint in partial state -->
+            <div id="expand-hint" class="w-full py-3 flex items-center justify-center gap-2 text-muted-foreground">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+              <span class="text-xs">Arraste para ver historico</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Overlay Modal -->
+      <div id="search-overlay" class="search-overlay">
+        <div class="p-4 pt-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold">Nova Rota</h2>
+            <button id="close-search" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          
+          <!-- Search Form -->
+          <div class="glass-dark rounded-2xl p-3 shadow-2xl mb-6">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                <div class="w-3 h-3 rounded-full bg-primary"></div>
+              </div>
+              <input type="text" placeholder="De onde sai o frete?" class="input bg-secondary/50">
+            </div>
+            <div class="flex items-center gap-3 pl-4 -my-1">
+              <div class="w-0.5 h-4 bg-border rounded-full"></div>
+            </div>
+            <div class="flex items-center gap-3 mt-2">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-success/20 flex items-center justify-center">
+                <svg class="w-4 h-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </div>
+              <input type="text" placeholder="Para onde vai?" class="input bg-secondary/50">
+            </div>
+            <button class="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+              Usar minha localizacao
+            </button>
+          </div>
+          
+          <!-- Recent searches -->
+          <div>
+            <h3 class="text-sm font-medium text-muted-foreground mb-3">Buscas recentes</h3>
+            <div class="space-y-2">
+              <button class="w-full p-3 rounded-xl bg-secondary/50 text-left flex items-center gap-3 hover:bg-secondary transition-colors">
+                <svg class="w-4 h-4 text-muted-foreground flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-sm text-foreground truncate">Av. Brasil, 500 - Sao Jose dos Campos</span>
+              </button>
+              <button class="w-full p-3 rounded-xl bg-secondary/50 text-left flex items-center gap-3 hover:bg-secondary transition-colors">
+                <svg class="w-4 h-4 text-muted-foreground flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-sm text-foreground truncate">Rua das Flores, 100 - Jacarei</span>
+              </button>
+              <button class="w-full p-3 rounded-xl bg-secondary/50 text-left flex items-center gap-3 hover:bg-secondary transition-colors">
+                <svg class="w-4 h-4 text-muted-foreground flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-sm text-foreground truncate">Centro, Jacarei</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== DRIVER VIEW ==================== -->
+    <div id="view-motorista" class="view hidden">
+      <!-- Map Background -->
+      <div class="fixed inset-0 bg-gradient-to-br from-secondary to-muted opacity-60">
+        <svg class="absolute inset-0 w-full h-full opacity-20">
+          <defs>
+            <pattern id="grid2" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid2)"/>
+        </svg>
+      </div>
+
+      <div class="relative z-10 min-h-screen p-4 pt-16 pb-24">
+        <!-- Mini Dashboard Cards -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="card bg-gradient-to-br from-primary/10 to-transparent border-primary/20">
+            <p class="text-xs text-muted-foreground mb-1">Lucro Mensal</p>
+            <p class="text-2xl font-black text-primary">R$2.770</p>
+            <p class="text-[10px] text-success mt-1">+12% vs mes anterior</p>
+          </div>
+          <div class="card">
+            <p class="text-xs text-muted-foreground mb-1">Fretes Feitos</p>
+            <p class="text-2xl font-black text-foreground">18</p>
+            <p class="text-[10px] text-muted-foreground mt-1">Meta: 25</p>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="card mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold">Meta Mensal</span>
+            <span class="text-xs text-muted-foreground">72%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-bar-fill" style="width: 72%"></div>
+          </div>
+          <p class="text-[10px] text-muted-foreground mt-2">Faltam 7 fretes para bater a meta</p>
+        </div>
+
+        <!-- Fuel Card -->
+        <div class="card mb-4 border-warning/30 bg-gradient-to-br from-warning/5 to-transparent">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-warning/20 flex items-center justify-center">
+                <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-foreground">Combustivel</p>
+                <p class="text-xs text-muted-foreground">Gasto este mes</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p class="text-lg font-black text-warning">R$480</p>
+              <p class="text-[10px] text-success">Lucro real: R$2.290</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery Status -->
+        <div class="card">
+          <h3 class="font-bold mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            Status da Entrega
+          </h3>
+          
+          <div class="space-y-4">
+            <div class="flex items-center gap-4">
+              <div class="w-8 h-8 rounded-full bg-success flex items-center justify-center">
+                <svg class="w-4 h-4 text-success-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div class="flex-1">
+                <p class="font-semibold text-sm">Coletado</p>
+                <p class="text-xs text-muted-foreground">14:30</p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+              <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center relative">
+                <div class="w-2 h-2 bg-primary-foreground rounded-full"></div>
+                <div class="absolute -inset-1 bg-primary/30 rounded-full animate-ping"></div>
+              </div>
+              <div class="flex-1">
+                <p class="font-semibold text-sm">Em Transito</p>
+                <p class="text-xs text-muted-foreground">15 min restantes</p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4 opacity-50">
+              <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                <div class="w-2 h-2 bg-muted-foreground rounded-full"></div>
+              </div>
+              <div class="flex-1">
+                <p class="font-semibold text-sm">Chegando</p>
+                <p class="text-xs text-muted-foreground">-</p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-4 opacity-50">
+              <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                <svg class="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div class="flex-1">
+                <p class="font-semibold text-sm">Entregue</p>
+                <p class="text-xs text-muted-foreground">-</p>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary w-full mt-6">
+            Confirmar Entrega
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MANAGER VIEW ==================== -->
+    <div id="view-gerente" class="view hidden">
+      <div class="min-h-screen p-4 pt-16 pb-24 bg-background">
+        <!-- KPIs Grid -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="card bg-gradient-to-br from-primary/10 to-transparent border-primary/20">
+            <p class="text-[10px] text-muted-foreground uppercase tracking-wide">Lucro VapFretes</p>
+            <p class="text-2xl font-black text-primary">R$4.850</p>
+            <p class="text-[10px] text-success mt-1">+18% vs mes anterior</p>
+          </div>
+          <div class="card">
+            <p class="text-[10px] text-muted-foreground uppercase tracking-wide">Faturamento</p>
+            <p class="text-2xl font-black text-foreground">R$12.400</p>
+            <p class="text-[10px] text-muted-foreground mt-1">Abril 2026</p>
+          </div>
+          <div class="card">
+            <p class="text-[10px] text-muted-foreground uppercase tracking-wide">Total de Fretes</p>
+            <p class="text-2xl font-black text-foreground">156</p>
+            <p class="text-[10px] text-success mt-1">+24 vs mes anterior</p>
+          </div>
+          <div class="card border-success/20">
+            <p class="text-[10px] text-muted-foreground uppercase tracking-wide">Em Andamento</p>
+            <p class="text-2xl font-black text-success">8</p>
+            <p class="text-[10px] text-muted-foreground mt-1">Agora</p>
+          </div>
+        </div>
+
+        <!-- Performance Chart Placeholder -->
+        <div class="card mb-4">
+          <h3 class="font-bold mb-4">Performance Semanal</h3>
+          <div class="h-40 flex items-end justify-between gap-2">
+            <div class="flex-1 flex flex-col items-center gap-1">
+              <div class="w-full bg-primary/30 rounded-t-md" style="height: 60%"></div>
+              <span class="text-[10px] text-muted-foreground">Seg</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-1">
+              <div class="w-full bg-primary/30 rounded-t-md" style="height: 80%"></div>
+              <span class="text-[10px] text-muted-foreground">Ter</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-1">
+              <div class="w-full bg-primary/30 rounded-t-md" style="height: 45%"></div>
+              <span class="text-[10px] text-muted-foreground">Qua</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-1">
+              <div class="w-full bg-primary/30 rounded-t-md" style="height: 90%"></div>
+              <span class="text-[10px] text-muted-foreground">Qui</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-1">
+              <div class="w-full bg-primary rounded-t-md" style="height: 100%"></div>
+              <span class="text-[10px] text-foreground font-bold">Sex</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-1">
+              <div class="w-full bg-primary/20 rounded-t-md" style="height: 30%"></div>
+              <span class="text-[10px] text-muted-foreground">Sab</span>
+            </div>
+            <div class="flex-1 flex flex-col items-center gap-1">
+              <div class="w-full bg-primary/10 rounded-t-md" style="height: 15%"></div>
+              <span class="text-[10px] text-muted-foreground">Dom</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Team Section -->
+        <div class="card mb-4">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold">Equipe</h3>
+            <span class="text-xs text-muted-foreground">4 motoristas</span>
+          </div>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between p-3 rounded-xl bg-secondary/50">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center text-success font-bold">J</div>
+                <div>
+                  <p class="font-semibold text-sm">Joao Silva</p>
+                  <p class="text-xs text-muted-foreground">28 fretes - R$4.200</p>
+                </div>
+              </div>
+              <div class="w-3 h-3 rounded-full bg-success"></div>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-xl bg-secondary/50">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center text-success font-bold">P</div>
+                <div>
+                  <p class="font-semibold text-sm">Pedro Santos</p>
+                  <p class="text-xs text-muted-foreground">22 fretes - R$3.800</p>
+                </div>
+              </div>
+              <div class="w-3 h-3 rounded-full bg-success"></div>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-xl bg-secondary/50">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-bold">C</div>
+                <div>
+                  <p class="font-semibold text-sm">Carlos Lima</p>
+                  <p class="text-xs text-muted-foreground">18 fretes - R$2.900</p>
+                </div>
+              </div>
+              <div class="w-3 h-3 rounded-full bg-muted-foreground"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Track Driver Button -->
+        <button id="track-driver-btn" class="btn btn-primary w-full">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Rastrear Motorista
+        </button>
+      </div>
+
+      <!-- Track Modal -->
+      <div id="track-modal" class="modal-overlay hidden">
+        <div class="modal">
+          <div class="modal-header flex items-center justify-between">
+            <h3 class="font-bold">Rastrear Motorista</h3>
+            <button id="close-track-modal" class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="modal-content">
+            <!-- Mini Map -->
+            <div class="h-48 rounded-xl bg-secondary mb-4 relative overflow-hidden">
+              <svg class="absolute inset-0 w-full h-full opacity-30">
+                <defs>
+                  <pattern id="grid3" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" stroke-width="0.5"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid3)"/>
+              </svg>
+              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div class="w-4 h-4 bg-primary rounded-full animate-pulse"></div>
+              </div>
+            </div>
+            
+            <!-- Driver Info -->
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-secondary/50">
+              <div class="w-12 h-12 rounded-full bg-success/20 flex items-center justify-center text-success font-bold text-lg">J</div>
+              <div>
+                <p class="font-bold">Joao Silva</p>
+                <p class="text-sm text-muted-foreground">Em transito - Av. Brasil, SJC</p>
+                <p class="text-xs text-primary mt-1">ETA: 15 minutos</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== BOTTOM NAVIGATION ==================== -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 glass-dark pb-safe">
+      <div class="flex items-center justify-around py-3">
+        <button class="nav-item active flex flex-col items-center gap-1 px-4 py-2" data-tab="home">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span class="text-[10px] font-semibold">Home</span>
+        </button>
+        <button class="nav-item flex flex-col items-center gap-1 px-4 py-2 opacity-60" data-tab="calcular">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <span class="text-[10px] font-semibold">Calcular</span>
+        </button>
+        <button class="nav-item flex flex-col items-center gap-1 px-4 py-2 opacity-60" data-tab="mapa">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+          <span class="text-[10px] font-semibold">Mapa</span>
+        </button>
+        <button class="nav-item flex flex-col items-center gap-1 px-4 py-2 opacity-60" data-tab="historico">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="text-[10px] font-semibold">Historico</span>
+        </button>
+        <button class="nav-item flex flex-col items-center gap-1 px-4 py-2 opacity-60" data-tab="perfil">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          <span class="text-[10px] font-semibold">Perfil</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <script>
+    // Profile switching
+    const tabs = document.querySelectorAll('.tab');
+    const views = document.querySelectorAll('.view');
+    
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const profile = tab.dataset.profile;
+        
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        views.forEach(v => v.classList.add('hidden'));
+        document.getElementById(`view-${profile}`).classList.remove('hidden');
+      });
+    });
+
+    // Bottom navigation
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        navItems.forEach(i => {
+          i.classList.remove('active');
+          i.classList.add('opacity-60');
+        });
+        item.classList.add('active');
+        item.classList.remove('opacity-60');
+      });
+    });
+
+    // Client bottom sheet functionality
+    const bottomSheet = document.getElementById('client-bottom-sheet');
+    const sheetHandle = document.getElementById('sheet-handle');
+    const collapsedPreview = document.getElementById('collapsed-preview');
+    const sheetContent = document.getElementById('sheet-content');
+    const historySection = document.getElementById('history-section');
+    const expandHint = document.getElementById('expand-hint');
+    
+    let sheetState = 'collapsed'; // collapsed, partial, expanded
+    let isDragging = false;
+    let startY = 0;
+
+    function updateSheetState(newState) {
+      sheetState = newState;
+      bottomSheet.classList.remove('collapsed', 'partial', 'expanded');
+      bottomSheet.classList.add(newState);
+      
+      if (newState === 'collapsed') {
+        collapsedPreview.classList.remove('hidden');
+        sheetContent.classList.add('hidden');
+      } else {
+        collapsedPreview.classList.add('hidden');
+        sheetContent.classList.remove('hidden');
+      }
+      
+      if (newState === 'expanded') {
+        historySection.classList.remove('hidden');
+        expandHint.classList.add('hidden');
+      } else {
+        historySection.classList.add('hidden');
+        expandHint.classList.remove('hidden');
+      }
+    }
+
+    sheetHandle.addEventListener('click', () => {
+      if (sheetState === 'collapsed') updateSheetState('partial');
+      else if (sheetState === 'partial') updateSheetState('expanded');
+      else updateSheetState('collapsed');
+    });
+
+    // Touch/drag handling for bottom sheet
+    sheetHandle.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      startY = e.touches[0].clientY;
+    });
+
+    sheetHandle.addEventListener('touchmove', (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+    });
+
+    sheetHandle.addEventListener('touchend', (e) => {
+      if (!isDragging) return;
+      isDragging = false;
+      const endY = e.changedTouches[0].clientY;
+      const diff = startY - endY;
+      
+      if (diff > 50) {
+        // Swipe up
+        if (sheetState === 'collapsed') updateSheetState('partial');
+        else if (sheetState === 'partial') updateSheetState('expanded');
+      } else if (diff < -50) {
+        // Swipe down
+        if (sheetState === 'expanded') updateSheetState('partial');
+        else if (sheetState === 'partial') updateSheetState('collapsed');
+      }
+    });
+
+    // Search overlay
+    const searchTrigger = document.getElementById('search-trigger');
+    const searchOverlay = document.getElementById('search-overlay');
+    const closeSearch = document.getElementById('close-search');
+
+    searchTrigger.addEventListener('click', () => {
+      searchOverlay.classList.add('active');
+    });
+
+    closeSearch.addEventListener('click', () => {
+      searchOverlay.classList.remove('active');
+    });
+
+    // Track modal
+    const trackBtn = document.getElementById('track-driver-btn');
+    const trackModal = document.getElementById('track-modal');
+    const closeTrackModal = document.getElementById('close-track-modal');
+
+    if (trackBtn) {
+      trackBtn.addEventListener('click', () => {
+        trackModal.classList.remove('hidden');
+      });
+    }
+
+    if (closeTrackModal) {
+      closeTrackModal.addEventListener('click', () => {
+        trackModal.classList.add('hidden');
+      });
+    }
+
+    // Close modal on overlay click
+    trackModal?.addEventListener('click', (e) => {
+      if (e.target === trackModal) {
+        trackModal.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
