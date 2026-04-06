@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VapFretes</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VapFretes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#080a0f">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' rx='22' fill='%23ff8c00'/><path d='M18 20 L38 72 L48 72 L58 72 L78 20 L64 20 L48 62 L32 20 Z' fill='white' opacity='.95'/><path d='M52 18 L42 44 L50 44 L40 74 L62 38 L54 38 Z' fill='%23ff6b00'/></svg>">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;900&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; background: #080a0f; }
+body { font-family: Barlow, sans-serif; color: #f5f5f5; overflow: hidden; }
+.app { width: 100%; height: 100%; display: flex; flex-direction: column; }
+
+/* TELA DE LOGIN */
+#loginScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #0a0e16 0%, #1a1f2e 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.logo-container {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-weight: 900;
+  font-size: 48px;
+  color: white;
+  box-shadow: 0 8px 32px rgba(255, 140, 0, 0.3);
+}
+
+.logo-text {
+  font-size: 28px;
+  font-weight: 700;
+  color: #f5f5f5;
+  margin-bottom: 8px;
+}
+
+.logo-subtitle {
+  font-size: 14px;
+  color: #999;
+}
+
+.login-form {
+  width: 100%;
+  max-width: 320px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  color: #ccc;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  background: #1a1f2e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #f5f5f5;
+  font-size: 14px;
+  font-family: Barlow, sans-serif;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #ff8c00;
+  box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.1);
+}
+
+.btn-login {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.btn-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 140, 0, 0.4);
+}
+
+.btn-login:active {
+  transform: translateY(0);
+}
+
+.btn-logout {
+  width: 100%;
+  padding: 10px;
+  background: #4c0519;
+  color: #ef4444;
+  border: 1px solid #7f1d1d;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.btn-logout:hover {
+  background: #7f1d1d;
+}
+
+/* MAIN APP */
+#mainApp {
+  display: none;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+}
+
+.header {
+  background: #0f1419;
+  border-bottom: 1px solid #1a1f2e;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.header-logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ff8c00;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-user {
+  font-size: 12px;
+  color: #999;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+#map-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 60px;
+  width: 100%;
+  display: none;
+  z-index: 1;
+}
+
+.tab {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding-bottom: 60px;
+  overflow-y: auto;
+  position: relative;
+  z-index: 2;
+}
+
+.tab.active {
+  display: flex;
+}
+
+.tab-content {
+  padding: 16px;
+}
+
+.card {
+  background: #1a1f2e;
+  border: 1px solid #252d3d;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f5f5f5;
+  margin-bottom: 8px;
+}
+
+.card-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ff8c00;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.list-item {
+  background: #1a1f2e;
+  border-bottom: 1px solid #252d3d;
+  padding: 12px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-item-main {
+  flex: 1;
+}
+
+.list-item-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f5f5f5;
+}
+
+.list-item-subtitle {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.list-item-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff8c00;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-ativo {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.status-finalizado {
+  background: rgba(107, 114, 128, 0.2);
+  color: #9ca3af;
+}
+
+.status-cancelado {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+/* ABAS INFERIORES */
+.tabs-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #0f1419;
+  border-top: 1px solid #1a1f2e;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+}
+
+.tab-btn {
+  flex: 1;
+  height: 100%;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: color 0.2s;
+}
+
+.tab-btn.active {
+  color: #ff8c00;
+}
+
+.tab-icon {
+  font-size: 20px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  gap: 12px;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  opacity: 0.3;
+}
+
+.empty-state-text {
+  font-size: 14px;
+}
+
+.btn {
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 140, 0, 0.3);
+}
+
+.btn-secondary {
+  background: #1a1f2e;
+  color: #ff8c00;
+  border: 1px solid #ff8c00;
+}
+
+.mb-4 { margin-bottom: 16px; }
+.mb-3 { margin-bottom: 12px; }
+.mb-2 { margin-bottom: 8px; }
+.mt-4 { margin-top: 16px; }
+
+.error-box {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #dc2626;
+  color: #fca5a5;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.success-box {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid #16a34a;
+  color: #bbf7d0;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.text-center { text-align: center; }
+.text-sm { font-size: 12px; }
+.text-xs { font-size: 11px; }
+.text-muted { color: #999; }
+
+@media (max-width: 480px) {
+  .logo-text { font-size: 24px; }
+  .card-value { font-size: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div id="loginScreen">
+  <div class="logo-container">
+    <div class="logo">V</div>
+    <div class="logo-text">VapFretes</div>
+    <div class="logo-subtitle">Gestão de Fretes</div>
+  </div>
+  <form id="loginForm" class="login-form">
+    <div class="form-group">
+      <label for="emailInput">Email</label>
+      <input type="email" id="emailInput" placeholder="seu@email.com" required>
+    </div>
+    <div class="form-group">
+      <label for="senhaInput">Senha</label>
+      <input type="password" id="senhaInput" placeholder="••••••••" required>
+    </div>
+    <div class="form-group">
+      <label for="roleInput">Tipo de Acesso</label>
+      <select id="roleInput" required>
+        <option value="">Selecione...</option>
+        <option value="gerente">Gerente</option>
+        <option value="motorista">Motorista</option>
+        <option value="cliente">Cliente</option>
+      </select>
+    </div>
+    <button type="submit" class="btn-login">Entrar</button>
+  </form>
+  <div id="loginError" style="margin-top: 20px; color: #ef4444; font-size: 12px; display: none;"></div>
+</div>
+
+<!-- APLICATIVO PRINCIPAL -->
+<div id="mainApp">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-logo">V VapFretes</div>
+    <div class="header-user" id="headerUser">-</div>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div class="content">
+    <!-- MAPA (oculto por padrão) -->
+    <div id="map-container"></div>
+
+    <!-- ABA: INÍCIO -->
+    <div id="inicio" class="tab active">
+      <div class="tab-content">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">Bem-vindo</h2>
+        <div id="inicioContent"></div>
+      </div>
+    </div>
+
+    <!-- ABA: FRETES (Gerente) / GANHOS (Motorista) -->
+    <div id="fretes" class="tab">
+      <div class="tab-content">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Fretes</h2>
+        <div id="fretesList"></div>
+      </div>
+    </div>
+
+    <!-- ABA: MAPA -->
+    <div id="mapa" class="tab"></div>
+
+    <!-- ABA: HISTÓRICO (Motorista) / RELATÓRIOS (Gerente) -->
+    <div id="historico" class="tab">
+      <div class="tab-content">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Histórico</h2>
+        <div id="historicoList"></div>
+      </div>
+    </div>
+
+    <!-- ABA: PERFIL -->
+    <div id="eu" class="tab">
+      <div class="tab-content">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 16px;">Meu Perfil</h2>
+        <div id="perfilContent"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVEGAÇÃO INFERIOR -->
+  <div class="tabs-nav">
+    <button class="tab-btn active" onclick="showTab('inicio')">
+      <div class="tab-icon">🏠</div>
+      <div>Início</div>
+    </button>
+    <button class="tab-btn" onclick="showTab('fretes')">
+      <div class="tab-icon">📦</div>
+      <div>Fretes</div>
+    </button>
+    <button class="tab-btn" onclick="showTab('mapa')">
+      <div class="tab-icon">🗺️</div>
+      <div>Mapa</div>
+    </button>
+    <button class="tab-btn" onclick="showTab('historico')">
+      <div class="tab-icon">📋</div>
+      <div>Histórico</div>
+    </button>
+    <button class="tab-btn" onclick="showTab('eu')">
+      <div class="tab-icon">👤</div>
+      <div>Perfil</div>
+    </button>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// CONFIGURAÇÃO SUPABASE
+// ============================================================================
+const SUPABASE_URL = 'https://atptmrycmvpocllqwgzo.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0cHRtcnljbXZwb2NsbHF3Z3pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzE3NTI3NTcsImV4cCI6MjA0NzMyODc1N30.FJ5e3zyUy8LnzWKRVfApE5H5BPG8cMxqGpj4n3bBqvk';
+const { createClient } = window.supabase;
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============================================================================
+// ESTADO GLOBAL
+// ============================================================================
+let globalUser = null;
+let globalRole = null;
+let globalMap = null;
+let fretes = [];
+let motoristas = [];
+let clientes = [];
+let perfil = null;
+
+// ============================================================================
+// FUNCTIONS: LOGIN
+// ============================================================================
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('emailInput').value.trim();
+  const senha = document.getElementById('senhaInput').value.trim();
+  const role = document.getElementById('roleInput').value.trim();
+  const loginError = document.getElementById('loginError');
+
+  if (!email || !senha || !role) {
+    loginError.textContent = 'Preencha todos os campos.';
+    loginError.style.display = 'block';
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (error) {
+      loginError.textContent = `Erro de autenticação: ${error.message}`;
+      loginError.style.display = 'block';
+      return;
+    }
+    globalUser = data.user;
+    globalRole = role;
+    localStorage.setItem('role', role);
+    localStorage.setItem('userId', globalUser.id);
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'flex';
+    await init();
+  } catch (err) {
+    loginError.textContent = `Erro: ${err.message}`;
+    loginError.style.display = 'block';
+  }
+}
+
+function logout() {
+  globalUser = null;
+  globalRole = null;
+  localStorage.removeItem('role');
+  localStorage.removeItem('userId');
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginForm').reset();
+}
+
+// ============================================================================
+// FUNCTIONS: NAVEGAÇÃO
+// ============================================================================
+
+function showTab(tabName) {
+  // Ocultar todas as abas
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  
+  // Controlar visibilidade do mapa
+  const mapContainer = document.getElementById('map-container');
+  if (tabName === 'mapa') {
+    mapContainer.style.display = 'block';
+    if (!globalMap) {
+      initMap();
+    }
+  } else {
+    mapContainer.style.display = 'none';
+  }
+  
+  // Ativar aba
+  document.getElementById(tabName).classList.add('active');
+  
+  // Atualizar botões
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.closest('.tab-btn').classList.add('active');
+  
+  // Forçar layout
+  window.dispatchEvent(new Event('resize'));
+}
+
+// ============================================================================
+// FUNCTIONS: DADOS
+// ============================================================================
+
+async function carregarGer() {
+  try {
+    const { data, error } = await supabase.from('tratativas').select('*');
+    if (error) throw error;
+    fretes = data || [];
+    renderizarFretesGer();
+  } catch (err) {
+    console.error('Erro ao carregar fretes (gerente):', err.message);
+    fretes = [];
+    renderizarFretesGer();
+  }
+}
+
+async function carregarMot() {
+  try {
+    const { data, error } = await supabase
+      .from('tratativas')
+      .select('*')
+      .eq('motorista_id', globalUser.id);
+    if (error) throw error;
+    fretes = data || [];
+    renderizarFretesMot();
+  } catch (err) {
+    console.error('Erro ao carregar fretes (motorista):', err.message);
+    fretes = [];
+    renderizarFretesMot();
+  }
+}
+
+async function getPerfil() {
+  try {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('id', globalUser.id)
+      .single();
+    if (error) throw error;
+    perfil = data || {};
+    renderizarPerfil();
+  } catch (err) {
+    console.error('Erro ao carregar perfil:', err.message);
+    perfil = {};
+    renderizarPerfil();
+  }
+}
+
+// ============================================================================
+// FUNCTIONS: RENDERIZAÇÃO
+// ============================================================================
+
+function renderizarFretesGer() {
+  const html = fretes
+    .map(f => `
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <div>
+            <div class="card-title">Frete #${f.id}</div>
+            <div class="list-item-subtitle">${f.origem || '-'} → ${f.destino || '-'}</div>
+          </div>
+          <span class="status-badge ${f.status === 'finalizado' ? 'status-finalizado' : f.status === 'ativo' ? 'status-ativo' : 'status-cancelado'}">${f.status || 'pendente'}</span>
+        </div>
+        <div style="font-size: 18px; font-weight: 700; color: #ff8c00; margin: 8px 0;">R$ ${(f.valor || 0).toFixed(2)}</div>
+        <div class="list-item-subtitle">Motorista: ${f.motorista_id || 'Não atribuído'}</div>
+        <button class="btn mt-4" onclick="finalizarFrete(${f.id})">Finalizar</button>
+      </div>
+    `)
+    .join('');
+  
+  if (html === '') {
+    document.getElementById('fretesList').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><div class="empty-state-text">Nenhum frete registrado</div></div>';
+  } else {
+    document.getElementById('fretesList').innerHTML = html;
+  }
+}
+
+function renderizarFretesMot() {
+  const html = fretes
+    .map(f => `
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <div>
+            <div class="card-title">Frete #${f.id}</div>
+            <div class="list-item-subtitle">${f.origem || '-'} → ${f.destino || '-'}</div>
+          </div>
+          <span class="status-badge ${f.status === 'finalizado' ? 'status-finalizado' : f.status === 'ativo' ? 'status-ativo' : 'status-cancelado'}">${f.status || 'pendente'}</span>
+        </div>
+        <div style="font-size: 18px; font-weight: 700; color: #ff8c00; margin: 8px 0;">R$ ${(f.valor || 0).toFixed(2)}</div>
+        <div class="list-item-subtitle">Data: ${f.data_criacao || '-'}</div>
+      </div>
+    `)
+    .join('');
+  
+  if (html === '') {
+    document.getElementById('fretesList').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📦</div><div class="empty-state-text">Nenhum frete atribuído</div></div>';
+  } else {
+    document.getElementById('fretesList').innerHTML = html;
+  }
+}
+
+function renderizarPerfil() {
+  const nome = perfil?.nome || 'Usuário';
+  const email = globalUser?.email || '-';
+  const role_label = globalRole === 'gerente' ? 'Gerente' : globalRole === 'motorista' ? 'Motorista' : 'Cliente';
+  const telefone = perfil?.telefone || 'Não informado';
+  const cidade = perfil?.cidade || 'Não informado';
+  
+  const lucroTotal = fretes.reduce((acc, f) => {
+    if (f.status === 'finalizado' && f.valor) return acc + parseFloat(f.valor || 0);
+    return acc;
+  }, 0);
+
+  const html = `
+    <div class="card">
+      <div class="card-title">Informações Pessoais</div>
+      <div style="margin-top: 12px;">
+        <div style="margin-bottom: 10px;">
+          <div class="text-xs text-muted">Nome</div>
+          <div style="color: #f5f5f5; font-weight: 500;">${nome}</div>
+        </div>
+        <div style="margin-bottom: 10px;">
+          <div class="text-xs text-muted">Email</div>
+          <div style="color: #f5f5f5; font-weight: 500;">${email}</div>
+        </div>
+        <div style="margin-bottom: 10px;">
+          <div class="text-xs text-muted">Tipo de Acesso</div>
+          <div style="color: #f5f5f5; font-weight: 500;">${role_label}</div>
+        </div>
+        <div style="margin-bottom: 10px;">
+          <div class="text-xs text-muted">Telefone</div>
+          <div style="color: #f5f5f5; font-weight: 500;">${telefone}</div>
+        </div>
+        <div>
+          <div class="text-xs text-muted">Cidade</div>
+          <div style="color: #f5f5f5; font-weight: 500;">${cidade}</div>
+        </div>
+      </div>
+    </div>
+    ${globalRole === 'motorista' ? `
+      <div class="card">
+        <div class="card-title">Ganhos Totais</div>
+        <div style="font-size: 28px; font-weight: 700; color: #ff8c00; margin-top: 8px;">R$ ${lucroTotal.toFixed(2)}</div>
+        <div class="list-item-subtitle">Fretes finalizados</div>
+      </div>
+    ` : ''}
+    <button class="btn-logout" onclick="logout()">Sair</button>
+  `;
+  
+  document.getElementById('perfilContent').innerHTML = html;
+}
+
+function renderizarInicio() {
+  let html = '<div class="card"><div class="card-title">Dashboard</div>';
+  
+  if (globalRole === 'gerente') {
+    const totalFaturado = fretes
+      .filter(f => f.status === 'finalizado')
+      .reduce((acc, f) => acc + parseFloat(f.valor || 0), 0);
+    
+    const fretesAtivos = fretes.filter(f => f.status === 'ativo').length;
+    
+    html += `
+      <div style="margin-top: 16px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="background: #1a1f2e; padding: 12px; border-radius: 8px;">
+            <div class="text-xs text-muted" style="margin-bottom: 4px;">Total Faturado</div>
+            <div style="font-size: 20px; font-weight: 700; color: #ff8c00;">R$ ${totalFaturado.toFixed(2)}</div>
+          </div>
+          <div style="background: #1a1f2e; padding: 12px; border-radius: 8px;">
+            <div class="text-xs text-muted" style="margin-bottom: 4px;">Fretes Ativos</div>
+            <div style="font-size: 20px; font-weight: 700; color: #22c55e;">${fretesAtivos}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (globalRole === 'motorista') {
+    const ganhoTotal = fretes
+      .filter(f => f.status === 'finalizado')
+      .reduce((acc, f) => acc + parseFloat(f.valor || 0), 0);
+    
+    const fretesCompletos = fretes.filter(f => f.status === 'finalizado').length;
+    
+    html += `
+      <div style="margin-top: 16px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="background: #1a1f2e; padding: 12px; border-radius: 8px;">
+            <div class="text-xs text-muted" style="margin-bottom: 4px;">Ganhos</div>
+            <div style="font-size: 20px; font-weight: 700; color: #ff8c00;">R$ ${ganhoTotal.toFixed(2)}</div>
+          </div>
+          <div style="background: #1a1f2e; padding: 12px; border-radius: 8px;">
+            <div class="text-xs text-muted" style="margin-bottom: 4px;">Entregas</div>
+            <div style="font-size: 20px; font-weight: 700; color: #22c55e;">${fretesCompletos}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  html += '</div>';
+  document.getElementById('inicioContent').innerHTML = html;
+}
+
+function renderizarHistorico() {
+  const html = fretes
+    .filter(f => f.status === 'finalizado')
+    .map(f => `
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div class="card-title">Frete #${f.id}</div>
+            <div class="list-item-subtitle">${f.origem || '-'} → ${f.destino || '-'}</div>
+            <div class="list-item-subtitle">Finalizado em ${f.data_conclusao || f.data_criacao || '-'}</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 16px; font-weight: 700; color: #ff8c00;">R$ ${(f.valor || 0).toFixed(2)}</div>
+          </div>
+        </div>
+      </div>
+    `)
+    .join('');
+  
+  if (html === '') {
+    document.getElementById('historicoList').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nenhum frete finalizado</div></div>';
+  } else {
+    document.getElementById('historicoList').innerHTML = html;
+  }
+}
+
+// ============================================================================
+// FUNCTIONS: AÇÕES
+// ============================================================================
+
+async function finalizarFrete(freteId) {
+  try {
+    const { error } = await supabase
+      .from('tratativas')
+      .update({ status: 'finalizado' })
+      .eq('id', freteId);
+    
+    if (error) throw error;
+    alert('Frete finalizado com sucesso!');
+    if (globalRole === 'gerente') {
+      await carregarGer();
+    }
+  } catch (err) {
+    console.error('Erro ao finalizar frete:', err.message);
+    alert('Erro ao finalizar frete.');
+  }
+}
+
+// ============================================================================
+// FUNCTIONS: MAPA
+// ============================================================================
+
+function initMap() {
+  const mapContainer = document.getElementById('map-container');
+  if (globalMap) return;
+  
+  globalMap = L.map(mapContainer).setView([-23.5505, -46.6333], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(globalMap);
+}
+
+function carregarLeaflet(callback) {
+  if (window.L) {
+    callback();
+  } else {
+    setTimeout(() => carregarLeaflet(callback), 100);
+  }
+}
+
+// ============================================================================
+// FUNÇÃO: INICIALIZAÇÃO
+// ============================================================================
+
+async function init() {
+  try {
+    document.getElementById('headerUser').textContent = `${globalRole} • ${globalUser?.email?.split('@')[0]}`;
+    
+    if (globalRole === 'gerente') {
+      await carregarGer();
+    } else if (globalRole === 'motorista') {
+      await carregarMot();
+    }
+    
+    await getPerfil();
+    renderizarInicio();
+    renderizarHistorico();
+  } catch (err) {
+    console.error('Erro na inicialização:', err.message);
+  }
+}
+
+// ============================================================================
+// EVENT LISTENERS
+// ============================================================================
+
+document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+// ============================================================================
+// INIT
+// ============================================================================
+
+window.addEventListener('load', () => {
+  const storedRole = localStorage.getItem('role');
+  const storedUserId = localStorage.getItem('userId');
+  
+  if (storedRole && storedUserId) {
+    globalRole = storedRole;
+    globalUser = { id: storedUserId };
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'flex';
+    init();
+  }
+});
+
+window.onerror = function(msg, src, line, col, err) {
+  const loginScreen = document.getElementById('loginScreen');
+  if (loginScreen && loginScreen.style.display !== 'none') {
+    const div = document.createElement('div');
+    div.style.cssText = 'background:#4c0519;color:#ef4444;padding:12px;border-radius:8px;margin:8px;font-size:12px';
+    div.textContent = 'JS Error L'+line+': ' + msg;
+    loginScreen.appendChild(div);
+  }
+};
+</script>
+</body>
+</html>
