@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VapFretes 2.0</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#080a0f">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #080a0f;
+  --bg2: #0f1419;
+  --bg3: #1a1f2e;
+  --text: #f5f5f5;
+  --muted: #999;
+  --border: #252d3d;
+  --orange: #ff8c00;
+  --green: #22c55e;
+  --red: #ef4444;
+  --blue: #3b82f6;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; background: var(--bg); font-family: Inter, sans-serif; color: var(--text); overflow: hidden; }
+
+.container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* LOGIN */
+#loginScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.logo { width: 100px; height: 100px; background: linear-gradient(135deg, var(--orange) 0%, #ff6b00 100%); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 56px; color: white; margin-bottom: 24px; }
+
+.login-form { width: 100%; max-width: 340px; }
+.login-form h1 { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+.login-form p { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 32px; }
+
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 8px; }
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: Inter, sans-serif;
+}
+
+.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--orange); }
+
+.btn-login {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--orange) 0%, #ff6b00 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 24px;
+  font-family: Inter, sans-serif;
+}
+
+.btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255, 140, 0, 0.4); }
+
+.error { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--red); padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; display: none; }
+
+/* HEADER */
+.header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  height: 56px;
+}
+
+.header-logo { font-size: 18px; font-weight: 700; color: var(--orange); }
+.header-info { font-size: 11px; color: var(--muted); }
+
+.btn-logout {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--red);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* MAIN */
+#mainApp { display: none; flex: 1; flex-direction: column; }
+#mainApp.show { display: flex; }
+
+.content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.tab {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding-bottom: 70px;
+}
+
+.tab.active { display: flex; }
+.tab-content { padding: 16px; overflow-y: auto; }
+
+/* CARDS */
+.card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+.card-big { font-size: 28px; font-weight: 700; color: var(--orange); margin: 12px 0; }
+.card-sub { font-size: 12px; color: var(--muted); }
+
+/* GRID */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.stat { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+.stat-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.stat-val { font-size: 22px; font-weight: 700; color: var(--orange); }
+
+/* LIST */
+.list-item {
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list-item:last-child { border-bottom: none; }
+.list-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.list-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.list-val { font-size: 14px; font-weight: 700; color: var(--orange); }
+
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green);
+}
+
+.badge.pending { background: rgba(249, 115, 22, 0.15); color: var(--orange); }
+
+/* BUTTONS */
+.btn {
+  padding: 10px 16px;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 8px;
+  font-family: Inter, sans-serif;
+}
+
+.btn:hover { background: #ff6b00; }
+.btn-green { background: var(--green); }
+.btn-green:hover { background: #16a34a; }
+
+/* INPUTS */
+.input-group { margin-bottom: 12px; }
+.input-group label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+.input-group input, .input-group select, .input-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: Inter, sans-serif;
+}
+
+.input-group textarea { min-height: 80px; resize: vertical; }
+
+/* MAP */
+#map { width: 100%; height: 100%; background: #e8e8e8; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  z-index: 100;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  gap: 4px;
+}
+
+.nav-item.active { color: var(--orange); }
+
+/* RESPONSIVE */
+@media (max-height: 600px) {
+  .tab-content { padding: 12px; }
+  .card { padding: 12px; margin-bottom: 8px; }
+}
+
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="container">
+  <div class="logo">⚡</div>
+  <form class="login-form" onsubmit="login(event)">
+    <h1>VapFretes 2.0</h1>
+    <p>Plataforma de fretes</p>
+    <div id="loginError" class="error"></div>
+    
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="seu@email.com" required>
+    </div>
+    
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="loginPass" placeholder="••••••••" required>
+    </div>
+
+    <div class="form-group">
+      <label>Tipo de Acesso</label>
+      <select id="loginRole" required>
+        <option value="">Selecione...</option>
+        <option value="gerente">Gerente (Você)</option>
+        <option value="motorista">Motorista</option>
+        <option value="cliente">Cliente</option>
+      </select>
+    </div>
+    
+    <button type="submit" class="btn-login">Entrar</button>
+    <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:16px">
+      Demo: qualquer email/senha
+    </p>
+  </form>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" class="container">
+  
+  <div class="header">
+    <div class="header-logo">⚡ VapFretes</div>
+    <div class="header-info" id="headerInfo">—</div>
+    <button class="btn-logout" onclick="logout()">Sair</button>
+  </div>
+
+  <div class="content">
+    
+    <!-- DASHBOARD -->
+    <div id="dashTab" class="tab active">
+      <div class="tab-content">
+        <div id="dashContent"></div>
+      </div>
+    </div>
+
+    <!-- FRETES -->
+    <div id="fretTab" class="tab">
+      <div class="tab-content">
+        <div id="fretContent"></div>
+      </div>
+    </div>
+
+    <!-- MAPA -->
+    <div id="mapTab" class="tab">
+      <div id="map"></div>
+    </div>
+
+    <!-- CHAT -->
+    <div id="chatTab" class="tab">
+      <div class="tab-content">
+        <div class="card">
+          <div class="card-title">💬 Chat</div>
+          <div id="chatBox" style="background: var(--bg2); border-radius: 8px; height: 250px; overflow-y: auto; padding: 12px; margin-bottom: 8px;"></div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="chatInput" placeholder="Mensagem..." style="flex: 1; padding: 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; color: var(--text);">
+            <button onclick="sendChat()" style="padding: 10px 16px; background: var(--orange); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERFIL -->
+    <div id="profTab" class="tab">
+      <div class="tab-content">
+        <div id="profContent"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" data-tab="dash" onclick="switchTab('dash')">📊<br>Dashboard</div>
+    <div class="nav-item" data-tab="fret" onclick="switchTab('fret')">📦<br>Fretes</div>
+    <div class="nav-item" data-tab="map" onclick="switchTab('map')">🗺️<br>Mapa</div>
+    <div class="nav-item" data-tab="chat" onclick="switchTab('chat')">💬<br>Chat</div>
+    <div class="nav-item" data-tab="prof" onclick="switchTab('prof')">👤<br>Perfil</div>
+  </div>
+
+</div>
+
+<script>
+console.log('🚀 VapFretes 2.0 iniciando...');
+
+// SUPABASE CONFIG
+const SUPA_URL = 'https://atptmrycmvpocllqwgzo.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0cHRtcnljbXZwb2NsbHF3Z3pvIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NzY2NTAwMDAsImV4cCI6MTk5MjIyNjAwMH0.SUPABASE_ANON_KEY';
+
+let db = null;
+try {
+  const { createClient } = window.supabase;
+  db = createClient(SUPA_URL, SUPA_KEY);
+} catch(e) {
+  console.warn('Supabase não disponível, usando mock');
+  db = null;
+}
+
+// STATE
+let user = null;
+let role = null;
+let profile = null;
+let fretes = [];
+let chats = [];
+let map = null;
+let dados = {
+  totalRecebido: 0,
+  totalAPagar: 0,
+  pagamentos: []
+};
+
+// HELPERS
+function fmt(v) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(tab + 'Tab').classList.add('active');
+  
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  
+  if (tab === 'map' && !map) setTimeout(() => initMap(), 100);
+}
+
+function showError(msg) {
+  const el = document.getElementById('loginError');
+  if (el) {
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+}
+
+// LOGIN
+function login(e) {
+  e.preventDefault();
+  
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  const r = document.getElementById('loginRole').value;
+  
+  if (!email || !pass || !r) {
+    showError('Preencha todos os campos');
+    return;
+  }
+
+  user = { id: 'user_' + Math.random().toString(36).substr(2, 9), email: email };
+  role = r;
+  
+  localStorage.setItem('userId', user.id);
+  localStorage.setItem('role', role);
+  localStorage.setItem('email', email);
+  
+  loadProfile();
+  loadDemoData();
+  
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainApp').classList.add('show');
+  
+  setTimeout(() => init(), 100);
+}
+
+function logout() {
+  user = null;
+  role = null;
+  localStorage.clear();
+  document.getElementById('mainApp').classList.remove('show');
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function loadProfile() {
+  profile = {
+    nome: localStorage.getItem('email')?.split('@')[0] || 'Usuário',
+    email: localStorage.getItem('email'),
+    role: role,
+    telefone: '',
+    pix: ''
+  };
+}
+
+function loadDemoData() {
+  fretes = [
+    { id: 1, origem: 'São Paulo', destino: 'Campinas', valor: 250, status: 'finalizado', motorista: 'João', cliente: 'Cliente1', data: '20/04' },
+    { id: 2, origem: 'São Paulo', destino: 'Santos', valor: 180, status: 'ativo', motorista: 'Maria', cliente: 'Cliente2', data: '21/04' },
+    { id: 3, origem: 'Osasco', destino: 'Sorocaba', valor: 320, status: 'finalizado', motorista: 'Pedro', cliente: 'Cliente3', data: '19/04' },
+    { id: 4, origem: 'São Paulo', destino: 'Jundiaí', valor: 220, status: 'ativo', motorista: 'Ana', cliente: 'Cliente4', data: '21/04' }
+  ];
+  
+  dados = {
+    totalRecebido: 970,
+    totalAPagar: 820,
+    pagamentos: [
+      { id: 1, frete: 1, valor: 250, status: 'pago', data: '20/04' },
+      { id: 2, frete: 3, valor: 320, status: 'pago', data: '19/04' },
+      { id: 3, frete: 2, valor: 180, status: 'pendente', data: '21/04' },
+      { id: 4, frete: 4, valor: 220, status: 'pendente', data: '21/04' }
+    ]
+  };
+}
+
+// DASHBOARD
+function renderDash() {
+  let html = '';
+  
+  if (role === 'gerente') {
+    const lucro = dados.totalRecebido - dados.totalAPagar;
+    html = `
+      <div class="card">
+        <div class="card-title">💰 Seu Dashboard</div>
+      </div>
+
+      <div class="grid2">
+        <div class="stat">
+          <div class="stat-label">Total Recebido</div>
+          <div class="stat-val">${fmt(dados.totalRecebido)}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total a Pagar</div>
+          <div class="stat-val" style="color:var(--red)">${fmt(dados.totalAPagar)}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💚 Seu Lucro</div>
+        <div class="card-big" style="color:var(--green)">${fmt(lucro)}</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📋 Pagamentos</div>
+        ${dados.pagamentos.map(p => `
+          <div class="list-item">
+            <div>
+              <div class="list-title">Frete #${p.frete}</div>
+              <div class="list-sub">${p.data}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="list-val">${fmt(p.valor)}</div>
+              <span class="badge ${p.status === 'pago' ? '' : 'pending'}">${p.status}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="card">
+        <button class="btn btn-green" onclick="registerPayment()">➕ Registrar Pagamento</button>
+        <button class="btn" style="background:var(--blue);" onclick="payMotoristas()">💳 Pagar Motoristas</button>
+      </div>
+    `;
+  } else if (role === 'motorista') {
+    const meusFretes = fretes.filter(f => f.motorista === 'João' || f.motorista === 'Maria');
+    const ganhos = meusFretes.reduce((a, f) => a + (f.status === 'finalizado' ? f.valor * 0.88 : 0), 0);
+    
+    html = `
+      <div class="card">
+        <div class="card-title">🚚 Meu Dashboard</div>
+      </div>
+
+      <div class="grid2">
+        <div class="stat">
+          <div class="stat-label">Ganhos</div>
+          <div class="stat-val">${fmt(ganhos)}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Ativos</div>
+          <div class="stat-val" style="color:var(--blue)">${meusFretes.filter(f => f.status === 'ativo').length}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📦 Fretes Disponíveis</div>
+        ${fretes.filter(f => f.status === 'ativo').map(f => `
+          <div class="list-item">
+            <div>
+              <div class="list-title">${f.origem} → ${f.destino}</div>
+              <div class="list-sub">${f.data}</div>
+            </div>
+            <div style="text-align:right">
+              <div class="list-val">${fmt(f.valor)}</div>
+              <button class="btn" style="padding:4px 8px;font-size:11px;margin:0;width:auto;">Aceitar</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else {
+    html = `
+      <div class="card">
+        <div class="card-title">📦 Meus Pedidos</div>
+      </div>
+
+      <div class="input-group">
+        <label>Origem</label>
+        <input type="text" placeholder="São Paulo">
+      </div>
+      <div class="input-group">
+        <label>Destino</label>
+        <input type="text" placeholder="Rio de Janeiro">
+      </div>
+      <div class="input-group">
+        <label>Distância (km)</label>
+        <input type="number" placeholder="100">
+      </div>
+
+      <button class="btn" onclick="calcFrete()">Calcular</button>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">Histórico</div>
+        ${fretes.slice(0, 2).map(f => `
+          <div class="list-item">
+            <div>
+              <div class="list-title">${f.origem} → ${f.destino}</div>
+              <div class="list-sub">${f.data}</div>
+            </div>
+            <div class="list-val">${fmt(f.valor)}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  document.getElementById('dashContent').innerHTML = html;
+}
+
+function renderFret() {
+  let html = '<div class="card"><div class="card-title">📋 Fretes</div></div>';
+  
+  fretes.forEach(f => {
+    html += `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+          <div>
+            <div class="card-title">#${f.id} ${f.origem} → ${f.destino}</div>
+            <div class="card-sub">${f.data}</div>
+          </div>
+          <span class="badge ${f.status === 'finalizado' ? '' : 'pending'}">${f.status}</span>
+        </div>
+        <div class="card-big">${fmt(f.valor)}</div>
+      </div>
+    `;
+  });
+  
+  document.getElementById('fretContent').innerHTML = html;
+}
+
+function renderProf() {
+  let html = `
+    <div class="card">
+      <div class="card-title">👤 Meu Perfil</div>
+      <div style="font-size:18px;font-weight:700;margin:12px 0">${profile.nome}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:16px">${profile.email}</div>
+      
+      <div class="list-item" style="background:transparent;border:none;padding:0;padding-bottom:8px">
+        <span>Tipo:</span>
+        <span class="badge">${role}</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="input-group">
+        <label>WhatsApp</label>
+        <input type="tel" placeholder="(11) 99999-9999">
+      </div>
+      <div class="input-group">
+        <label>Chave PIX</label>
+        <input type="text" placeholder="CPF, Email ou Telefone">
+      </div>
+      <button class="btn">Salvar</button>
+    </div>
+  `;
+  
+  document.getElementById('profContent').innerHTML = html;
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  
+  chats.push({
+    from: profile.email,
+    text: msg,
+    time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  });
+  
+  input.value = '';
+  renderChat();
+}
+
+function renderChat() {
+  const box = document.getElementById('chatBox');
+  box.innerHTML = chats.map(m => `
+    <div style="margin-bottom:8px;padding:8px;background:var(--bg3);border-radius:6px;font-size:12px">
+      <div style="font-weight:600;color:var(--orange);margin-bottom:2px">${m.from}</div>
+      <div>${m.text}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px">${m.time}</div>
+    </div>
+  `).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+function initMap() {
+  console.log('Inicializando mapa...');
+  setTimeout(() => {
+    const mapEl = document.getElementById('map');
+    if (!mapEl) return;
+    
+    map = L.map(mapEl).setView([-23.5505, -46.6333], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+    
+    L.marker([-23.5505, -46.6333]).addTo(map).bindPopup('Você aqui');
+  }, 200);
+}
+
+function calcFrete() { alert('Calcular frete'); }
+function registerPayment() { alert('Registrar pagamento recebido'); }
+function payMotoristas() { alert('Pagar motoristas via PIX'); }
+
+function init() {
+  console.log('Inicializando app...');
+  document.getElementById('headerInfo').textContent = `${role} • ${profile.email.split('@')[0]}`;
+  
+  renderDash();
+  renderFret();
+  renderProf();
+}
+
+// WINDOW LOAD
+window.addEventListener('load', () => {
+  const savedId = localStorage.getItem('userId');
+  const savedRole = localStorage.getItem('role');
+  const savedEmail = localStorage.getItem('email');
+  
+  if (savedId && savedRole && savedEmail) {
+    user = { id: savedId, email: savedEmail };
+    role = savedRole;
+    loadProfile();
+    loadDemoData();
+    
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').classList.add('show');
+    
+    setTimeout(() => init(), 100);
+  }
+});
+</script>
+
+</body>
+</html>
