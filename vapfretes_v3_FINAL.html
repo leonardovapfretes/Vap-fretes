@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VapFretes - Plataforma de Fretes</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#080a0f">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg-primary: #080a0f;
+  --bg-secondary: #0f1419;
+  --bg-tertiary: #1a1f2e;
+  --text-primary: #f5f5f5;
+  --text-secondary: #999;
+  --text-muted: #666;
+  --border: #252d3d;
+  --orange: #ff8c00;
+  --orange-dark: #ff6b00;
+  --green: #22c55e;
+  --red: #ef4444;
+  --blue: #3b82f6;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; background: var(--bg-primary); font-family: Inter, sans-serif; color: var(--text-primary); overflow: hidden; }
+
+.app-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* LOGIN */
+#loginScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.login-logo {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+  font-weight: 900;
+  color: white;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 32px rgba(255, 140, 0, 0.3);
+}
+
+.login-form {
+  width: 100%;
+  max-width: 340px;
+}
+
+.login-form h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.login-form p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: Inter, sans-serif;
+  transition: all 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.1);
+}
+
+.btn-login {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 24px;
+  transition: all 0.3s;
+  font-family: Inter, sans-serif;
+}
+
+.btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255, 140, 0, 0.4); }
+.btn-login:active { transform: translateY(0); }
+
+.login-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--red);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* HEADER */
+.header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  height: 56px;
+}
+
+.header-logo { font-size: 18px; font-weight: 700; color: var(--orange); }
+.header-user { font-size: 12px; color: var(--text-secondary); text-align: center; }
+
+.btn-logout {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--red);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover { background: rgba(239, 68, 68, 0.2); }
+
+/* MAIN */
+.main-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.tab {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.tab.active { display: flex; }
+.tab-content { padding: 16px; flex: 1; }
+
+/* CARDS */
+.card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.card-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--orange);
+  margin-bottom: 4px;
+}
+
+.card-subtitle { font-size: 12px; color: var(--text-secondary); }
+
+/* BUTTONS */
+.btn {
+  padding: 10px 16px;
+  background: var(--orange);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  transition: all 0.2s;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn:hover { background: var(--orange-dark); transform: translateY(-1px); }
+
+.btn-green { background: var(--green); }
+.btn-green:hover { background: #16a34a; }
+
+/* STATUS */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-active { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+.badge-pending { background: rgba(249, 115, 22, 0.15); color: var(--orange); }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  z-index: 100;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav-item.active { color: var(--orange); }
+
+/* DASHBOARD */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.stat-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+.stat-value { font-size: 24px; font-weight: 700; color: var(--orange); }
+
+/* LISTS */
+.list-item {
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list-item:last-child { border-bottom: none; }
+.list-item-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.list-item-subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.list-item-value { font-size: 14px; font-weight: 700; color: var(--orange); }
+
+/* FORMS */
+.input-group { margin-bottom: 12px; }
+.input-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.input-group input, .input-group select, .input-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: Inter, sans-serif;
+}
+
+.input-group textarea { min-height: 80px; resize: vertical; }
+
+/* EMPTY STATE */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+.empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+
+/* MAP */
+#map { width: 100%; height: 100%; background: #e8e8e8; }
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .tab-content { padding-bottom: 76px; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="app-container">
+  <div class="login-logo">⚡</div>
+  <form class="login-form" onsubmit="handleLogin(event)">
+    <h1>VapFretes</h1>
+    <p>Plataforma de fretes</p>
+    <div id="loginError" class="login-error" style="display:none;"></div>
+    
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="emailInput" placeholder="seu@email.com" required>
+    </div>
+    
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="passwordInput" placeholder="••••••••" required>
+    </div>
+    
+    <button type="submit" class="btn-login">Entrar como Gerente</button>
+    <p style="text-align:center;font-size:12px;color:var(--text-secondary);margin-top:16px">
+      Teste com qualquer email e senha
+    </p>
+  </form>
+</div>
+
+<!-- MAIN APP -->
+<div id="mainApp" class="app-container" style="display:none">
+  
+  <div class="header">
+    <div class="header-logo">⚡ VapFretes</div>
+    <div style="flex:1;text-align:center">
+      <div class="header-user" id="headerUser">—</div>
+    </div>
+    <button class="btn-logout" onclick="logout()">Sair</button>
+  </div>
+
+  <div class="main-content">
+    
+    <!-- TAB: Dashboard -->
+    <div id="dashboardTab" class="tab active">
+      <div class="tab-content">
+        <div id="dashboardContent"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Fretes -->
+    <div id="fretesTab" class="tab">
+      <div class="tab-content">
+        <div id="fretesContent"></div>
+      </div>
+    </div>
+
+    <!-- TAB: Mapa -->
+    <div id="mapaTab" class="tab">
+      <div id="map"></div>
+    </div>
+
+    <!-- TAB: Chat -->
+    <div id="chatTab" class="tab">
+      <div class="tab-content">
+        <div class="card">
+          <div class="card-title">💬 Chat</div>
+          <div id="chatBox" style="background: var(--bg-secondary); border-radius: 8px; height: 250px; overflow-y: auto; padding: 12px; margin-bottom: 8px;"></div>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="chatInput" placeholder="Mensagem..." style="flex: 1; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-family: Inter;">
+            <button onclick="sendChat()" style="padding: 10px 16px; background: var(--orange); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Perfil -->
+    <div id="profileTab" class="tab">
+      <div class="tab-content">
+        <div id="profileContent"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-nav" id="bottomNav"></div>
+  
+</div>
+
+<script>
+console.log('🚀 VapFretes iniciando...');
+
+// ===== GLOBAL STATE =====
+let currentUser = null;
+let currentRole = 'gerente';
+let currentProfile = null;
+let fretes = [];
+let chatMessages = [];
+
+// ===== HELPER FUNCTIONS =====
+function showTab(tabName) {
+  console.log('📑 Abrindo tab:', tabName);
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById(tabName + 'Tab');
+  if (tab) {
+    tab.classList.add('active');
+  }
+  
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navItem = document.querySelector(`[data-tab="${tabName}"]`);
+  if (navItem) navItem.classList.add('active');
+}
+
+function showError(msg) {
+  console.error('❌ Erro:', msg);
+  const el = document.getElementById('loginError');
+  if (el) {
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+}
+
+function formatCurrency(v) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+}
+
+// ===== LOGIN =====
+function handleLogin(e) {
+  e.preventDefault();
+  console.log('🔐 Tentando login...');
+  
+  const email = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('passwordInput').value.trim();
+  
+  if (!email || !password) {
+    showError('Preencha email e senha');
+    return;
+  }
+
+  try {
+    // Cria usuário
+    currentUser = {
+      id: 'user_' + Math.random().toString(36).substr(2, 9),
+      email: email
+    };
+    currentRole = 'gerente'; // Sempre gerente
+    
+    // Salva na sessão
+    localStorage.setItem('userId', currentUser.id);
+    localStorage.setItem('role', currentRole);
+    localStorage.setItem('email', email);
+    
+    console.log('✅ Login bem-sucedido:', currentUser);
+    
+    // Carrega dados
+    loadProfile();
+    loadDemoData();
+    
+    // Mostra app
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'flex';
+    
+    // Inicializa
+    setTimeout(() => initializeApp(), 100);
+    
+  } catch (err) {
+    console.error('Erro login:', err);
+    showError('Erro: ' + err.message);
+  }
+}
+
+// ===== LOGOUT =====
+function logout() {
+  console.log('👋 Logout');
+  currentUser = null;
+  currentRole = null;
+  currentProfile = null;
+  localStorage.clear();
+  
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('emailInput').value = '';
+  document.getElementById('passwordInput').value = '';
+}
+
+// ===== PROFILE =====
+function loadProfile() {
+  console.log('👤 Carregando perfil...');
+  currentProfile = {
+    nome: localStorage.getItem('email')?.split('@')[0] || 'Gerente',
+    email: localStorage.getItem('email'),
+    role: currentRole,
+    saldo: 5240.50
+  };
+  console.log('Perfil:', currentProfile);
+}
+
+// ===== DEMO DATA =====
+function loadDemoData() {
+  console.log('📦 Carregando dados demo...');
+  fretes = [
+    { id: 1, origem: 'São Paulo', destino: 'Campinas', valor: 250, status: 'finalizado', data: '20/04' },
+    { id: 2, origem: 'São Paulo', destino: 'Santos', valor: 180, status: 'ativo', data: '21/04' },
+    { id: 3, origem: 'Osasco', destino: 'Sorocaba', valor: 320, status: 'finalizado', data: '19/04' },
+    { id: 4, origem: 'São Paulo', destino: 'Jundiaí', valor: 220, status: 'ativo', data: '21/04' }
+  ];
+  console.log('Fretes carregados:', fretes.length);
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  console.log('📊 Renderizando dashboard...');
+  const totalFaturado = fretes.reduce((a, f) => f.status === 'finalizado' ? a + f.valor : a, 0);
+  const totalTaxa = totalFaturado * 0.12;
+  const fretesAtivos = fretes.filter(f => f.status === 'ativo').length;
+  
+  let html = `
+    <div class="card">
+      <div class="card-title">📊 Dashboard Gerente</div>
+      <p style="font-size:12px;color:var(--text-secondary)">Sua operação em tempo real</p>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Faturado</div>
+        <div class="stat-value">${formatCurrency(totalFaturado)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sua Taxa (12%)</div>
+        <div class="stat-value" style="color: var(--green)">${formatCurrency(totalTaxa)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Fretes Ativos</div>
+        <div class="stat-value" style="color: var(--blue)">${fretesAtivos}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Motoristas Online</div>
+        <div class="stat-value" style="color: var(--orange)">3</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Saldo Disponível</div>
+      <div style="font-size: 32px; font-weight: 700; color: var(--green); margin: 12px 0">${formatCurrency(totalTaxa)}</div>
+      <button class="btn btn-green">Sacar Ganhos</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Últimos 4 Fretes</div>
+      ${fretes.map(f => `
+        <div class="list-item">
+          <div>
+            <div class="list-item-title">${f.origem} → ${f.destino}</div>
+            <div class="list-item-subtitle">${f.data}</div>
+          </div>
+          <div style="text-align: right">
+            <div class="list-item-value">${formatCurrency(f.valor)}</div>
+            <span class="badge ${f.status === 'finalizado' ? 'badge-active' : 'badge-pending'}">${f.status}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  
+  document.getElementById('dashboardContent').innerHTML = html;
+}
+
+// ===== FRETES =====
+function renderFretes() {
+  console.log('📋 Renderizando fretes...');
+  let html = `
+    <div class="card">
+      <div class="card-title">📋 Todos os Fretes (${fretes.length})</div>
+    </div>
+  `;
+  
+  fretes.forEach(f => {
+    html += `
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px">
+          <div>
+            <div class="card-title">#${f.id} - ${f.origem} → ${f.destino}</div>
+            <div class="card-subtitle">${f.data}</div>
+          </div>
+          <span class="badge ${f.status === 'finalizado' ? 'badge-active' : 'badge-pending'}">${f.status}</span>
+        </div>
+        <div style="font-size: 24px; font-weight: 700; color: var(--orange); margin: 8px 0">${formatCurrency(f.valor)}</div>
+      </div>
+    `;
+  });
+  
+  document.getElementById('fretesContent').innerHTML = html;
+}
+
+// ===== PERFIL =====
+function renderProfile() {
+  console.log('👤 Renderizando perfil...');
+  let html = `
+    <div class="card">
+      <div class="card-title">👤 Meu Perfil</div>
+      <div style="font-size: 18px; font-weight: 700; margin: 12px 0">${currentProfile.nome}</div>
+      <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px">${currentProfile.email}</div>
+      
+      <div class="list-item" style="background: transparent; border: none; padding: 0; padding-bottom: 8px">
+        <span>Tipo de Acesso:</span>
+        <span class="badge badge-pending">Gerente</span>
+      </div>
+      <div class="list-item" style="background: transparent; border: none; padding: 0">
+        <span>Saldo:</span>
+        <span style="color: var(--green); font-weight: 700">${formatCurrency(currentProfile.saldo)}</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn btn-green">Solicitar Saque</button>
+    </div>
+  `;
+  
+  document.getElementById('profileContent').innerHTML = html;
+}
+
+// ===== CHAT =====
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  
+  chatMessages.push({
+    from: currentProfile.email,
+    text: msg,
+    time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  });
+  
+  input.value = '';
+  renderChat();
+}
+
+function renderChat() {
+  const box = document.getElementById('chatBox');
+  box.innerHTML = chatMessages.map(m => `
+    <div style="margin-bottom: 8px; padding: 8px; background: var(--bg-tertiary); border-radius: 6px; font-size: 12px">
+      <div style="font-weight: 600; color: var(--orange); margin-bottom: 2px">${m.from}</div>
+      <div>${m.text}</div>
+      <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px">${m.time}</div>
+    </div>
+  `).join('');
+  box.scrollTop = box.scrollHeight;
+}
+
+// ===== NAV =====
+function renderNav() {
+  console.log('🗺️ Renderizando navegação...');
+  const html = `
+    <div class="nav-item active" data-tab="dashboard" onclick="showTab('dashboard')">📊<br>Dashboard</div>
+    <div class="nav-item" data-tab="fretes" onclick="showTab('fretes')">📦<br>Fretes</div>
+    <div class="nav-item" data-tab="mapa" onclick="showTab('mapa')">🗺️<br>Mapa</div>
+    <div class="nav-item" data-tab="chat" onclick="showTab('chat')">💬<br>Chat</div>
+    <div class="nav-item" data-tab="profile" onclick="showTab('profile')">👤<br>Perfil</div>
+  `;
+  document.getElementById('bottomNav').innerHTML = html;
+}
+
+// ===== MAP =====
+function initMap() {
+  console.log('🗺️ Inicializando mapa...');
+  setTimeout(() => {
+    const mapEl = document.getElementById('map');
+    if (!mapEl) return;
+    
+    let map = L.map(mapEl).setView([-23.5505, -46.6333], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+  }, 200);
+}
+
+// ===== INIT =====
+function initializeApp() {
+  console.log('⚙️ Inicializando app...');
+  
+  if (!currentProfile || !currentUser) {
+    console.error('❌ Sem perfil carregado!');
+    return;
+  }
+  
+  document.getElementById('headerUser').textContent = `Gerente • ${currentProfile.email.split('@')[0]}`;
+  
+  renderNav();
+  renderDashboard();
+  renderFretes();
+  renderProfile();
+  
+  console.log('✅ App inicializado com sucesso!');
+}
+
+// ===== WINDOW LOAD =====
+window.addEventListener('load', () => {
+  console.log('🔄 Página carregada');
+  
+  const savedId = localStorage.getItem('userId');
+  const savedEmail = localStorage.getItem('email');
+  
+  if (savedId && savedEmail) {
+    console.log('📝 Recuperando sessão...');
+    currentUser = { id: savedId, email: savedEmail };
+    currentRole = 'gerente';
+    loadProfile();
+    loadDemoData();
+    
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'flex';
+    
+    setTimeout(() => initializeApp(), 100);
+  }
+});
+</script>
+
+</body>
+</html>
