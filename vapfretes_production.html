@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>VapFretes</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ff8c00">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;900&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+:root{
+  --bg:#111214;
+  --surface:#18191c;
+  --card:#1e2023;
+  --orange:#f97316;
+  --text:#ffffff;
+  --muted:#707070;
+  --green:#22c55e;
+  --red:#ef4444;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;overflow-x:hidden}
+
+/* LOGIN */
+#loginScreen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;background:var(--bg)}
+.login-logo{width:120px;height:120px;margin-bottom:24px}
+.login-form{width:100%;max-width:400px}
+.login-form h1{font-size:26px;font-weight:700;text-align:center;margin-bottom:8px}
+.login-form p{font-size:13px;color:var(--muted);text-align:center;margin-bottom:32px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.form-group input{
+  width:100%;padding:12px 14px;background:var(--card);border:1px solid #2a2c30;border-radius:10px;
+  color:var(--text);font-size:14px;font-family:Barlow,sans-serif;outline:none
+}
+.form-group input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(249,115,22,0.1)}
+.btn-login{
+  width:100%;padding:13px;background:linear-gradient(135deg,var(--orange) 0%,#ff6b00 100%);
+  color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;
+  margin-top:24px;font-family:Barlow,sans-serif;transition:all 0.2s
+}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(249,115,22,0.4)}
+.login-error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;
+  padding:12px;border-radius:8px;font-size:12px;margin-bottom:16px;display:none;text-align:center}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(249,115,22,0.3);
+  border-top-color:var(--orange);border-radius:50%;animation:spin 0.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* APP */
+#appScreen{display:none;min-height:100vh;padding-bottom:80px}
+header{background:var(--surface);border-bottom:1px solid #2a2c30;padding:14px 18px;
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-logo{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--orange)}
+.header-logo svg{width:30px;height:30px}
+.header-user{font-size:11px;color:var(--muted)}
+.logout-btn{background:transparent;border:1px solid #2a2c30;color:var(--muted);
+  border-radius:20px;padding:6px 14px;font-size:11px;cursor:pointer;font-family:Barlow,sans-serif;
+  font-weight:600;transition:all 0.15s}
+.logout-btn:active{background:var(--card);color:var(--text)}
+
+main{padding:14px;max-width:600px;margin:0 auto}
+.section{display:none}
+.section.active{display:block;animation:fadeUp 0.2s ease}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.card{background:var(--card);border:1px solid #2a2c30;border-radius:14px;padding:16px;margin-bottom:12px}
+.card-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-box{background:#242628;border:1px solid #2a2c30;border-radius:12px;padding:14px;border-top:2px solid var(--orange)}
+.stat-label{font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase}
+.stat-value{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--text)}
+
+.form-group{margin-bottom:12px}
+input,select,textarea{width:100%;background:#242628;border:1px solid #2a2c30;border-radius:10px;
+  padding:12px 14px;color:var(--text);font-family:Barlow,sans-serif;font-size:14px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--orange)}
+textarea{min-height:70px;resize:vertical}
+
+.btn{width:100%;padding:14px;border-radius:10px;border:none;font-family:'Barlow Condensed',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;transition:all 0.1s;margin-bottom:8px}
+.btn-primary{background:var(--orange);color:white}
+.btn-primary:active{transform:scale(0.97);opacity:0.9}
+.btn-green{background:var(--green);color:white}
+
+.list-item{background:var(--card);border-bottom:1px solid #2a2c30;padding:12px 0;display:flex;justify-content:space-between;align-items:center}
+.list-item:last-child{border-bottom:none}
+.list-title{font-size:13px;font-weight:600;color:var(--text)}
+.list-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.list-val{font-size:14px;font-weight:700;color:var(--orange)}
+
+.badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(249,115,22,0.15);color:var(--orange);text-transform:uppercase}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid #2a2c30;display:flex;z-index:100}
+.nav-btn{flex:1;padding:12px 2px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;border:none;background:none;color:var(--muted);font-family:Barlow,sans-serif;font-size:9px;
+  font-weight:700;transition:color 0.15s;position:relative}
+.nav-btn.active{color:var(--orange)}
+.nav-btn.active::after{content:'';position:absolute;top:0;left:30%;right:30%;height:2px;background:var(--orange);border-radius:0 0 3px 3px}
+
+/* MAP */
+#map{width:100%;height:calc(100vh - 56px);background:#e8e8e8}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <svg width="120" height="120" viewBox="0 0 160 70" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:16px;filter:drop-shadow(0 0 20px rgba(249,115,22,0.4))">
+    <defs>
+      <linearGradient id="hg1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#ff8c00"/>
+        <stop offset="100%" style="stop-color:#e05500"/>
+      </linearGradient>
+    </defs>
+    <path d="M8 8 L28 58 L40 58 L52 18 L44 18 L36 48 L28 18 Z" fill="url(#hg1)"/>
+    <path d="M34 6 L26 28 L32 28 L24 50 L42 22 L36 22 Z" fill="white" opacity="0.95"/>
+    <text x="62" y="32" font-family="Barlow Condensed,sans-serif" font-weight="900" font-size="22" fill="#ff8c00" letter-spacing="2">VAP</text>
+    <text x="62" y="54" font-family="Barlow Condensed,sans-serif" font-weight="700" font-size="16" fill="#f0f2f8" letter-spacing="3">FRETES</text>
+  </svg>
+
+  <form class="login-form" onsubmit="login(event)">
+    <h1>VapFretes</h1>
+    <p>Plataforma de fretes</p>
+    <div id="loginError" class="login-error"></div>
+    
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="seu@email.com" required>
+    </div>
+    
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="loginPass" placeholder="••••••••" required>
+    </div>
+    
+    <button type="submit" class="btn-login" id="btnLogin">Entrar</button>
+    <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:16px">
+      Sua conta será identificada automaticamente
+    </p>
+  </form>
+</div>
+
+<!-- APP -->
+<div id="appScreen">
+  
+  <header>
+    <div class="header-logo">
+      <svg width="24" height="24" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg">
+        <rect width="96" height="96" rx="22" fill="currentColor"/>
+        <path d="M18 20 L38 72 L48 72 L58 72 L78 20 L64 20 L48 62 L32 20 Z" fill="white" opacity="0.95"/>
+      </svg>
+      VAPFRETES
+    </div>
+    <div class="header-user" id="headerUser">—</div>
+    <button class="logout-btn" onclick="logout()">Sair</button>
+  </header>
+
+  <main>
+    
+    <!-- GERENTE -->
+    <div id="gerenteSec" class="section">
+      <div class="card">
+        <div class="card-title">💰 Dashboard Gerente</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Total Recebido</div>
+          <div class="stat-value" id="statTotalRec">R$ 0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Seu Lucro (12%)</div>
+          <div class="stat-value" id="statLucro">R$ 0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📊 Fretes</div>
+        <div id="gerenteFretes"></div>
+      </div>
+    </div>
+
+    <!-- MOTORISTA -->
+    <div id="motoristaSec" class="section">
+      <div class="card">
+        <div class="card-title">🚚 Dashboard Motorista</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Ganhos</div>
+          <div class="stat-value" id="statGanhos">R$ 0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Fretes Aceitos</div>
+          <div class="stat-value" id="statFretesAceitos">0</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📦 Fretes Disponíveis</div>
+        <div id="motoristafretesDisp"></div>
+      </div>
+    </div>
+
+    <!-- CLIENTE -->
+    <div id="clienteSec" class="section">
+      <div class="card">
+        <div class="card-title">📦 Solicitar Frete</div>
+      </div>
+
+      <div class="form-group">
+        <label>Origem</label>
+        <input type="text" id="clienteOrigem" placeholder="São Paulo, SP">
+      </div>
+      <div class="form-group">
+        <label>Destino</label>
+        <input type="text" id="clienteDestino" placeholder="Campinas, SP">
+      </div>
+      <div class="form-group">
+        <label>Distância (km)</label>
+        <input type="number" id="clienteKm" placeholder="50" min="1">
+      </div>
+
+      <button class="btn btn-primary" onclick="calcularFrete()">Calcular Frete</button>
+      <div id="clienteResultado"></div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-title">📋 Meus Pedidos</div>
+        <div id="clientePedidos"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" id="navGerente" onclick="switchSection('gerente')" style="display:none"><span>📊</span>Dashboard</button>
+    <button class="nav-btn" id="navMotorista" onclick="switchSection('motorista')" style="display:none"><span>🚚</span>Motorista</button>
+    <button class="nav-btn" id="navCliente" onclick="switchSection('cliente')" style="display:none"><span>📦</span>Cliente</button>
+  </div>
+
+</div>
+
+<script>
+console.log('🚀 VapFretes Production iniciando...');
+
+// SUPABASE CONFIG
+const SUPABASE_URL = 'https://xbjrngdtkeucfwwnxzuj.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_9RLGYoG6rZTyrPi_lSVKWw_Jm7B647O';
+
+const { createClient } = window.supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// STATE
+let currentUser = null;
+let currentRole = null;
+let fretes = [];
+
+// AUTO-DETECT ROLE POR EMAIL
+function detectRole(email) {
+  if (email.toLowerCase().includes('gerente')) return 'gerente';
+  if (email.toLowerCase().includes('motorista')) return 'motorista';
+  if (email.toLowerCase().includes('cliente')) return 'cliente';
+  return null;
+}
+
+// LOGIN
+async function login(e) {
+  e.preventDefault();
+  
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  const btn = document.getElementById('btnLogin');
+  
+  if (!email || !pass) {
+    showError('Preencha email e senha');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const role = detectRole(email);
+    if (!role) {
+      showError('Email não reconhecido. Use email com gerente/motorista/cliente');
+      btn.disabled = false;
+      btn.innerHTML = 'Entrar';
+      return;
+    }
+
+    // Tenta fazer login no Supabase
+    const { data, error } = await db.auth.signInWithPassword({
+      email: email,
+      password: pass
+    });
+
+    if (error) {
+      // Se não tiver conta, cria uma
+      const { data: signUpData, error: signUpError } = await db.auth.signUp({
+        email: email,
+        password: pass
+      });
+      
+      if (signUpError) throw signUpError;
+      currentUser = signUpData.user;
+    } else {
+      currentUser = data.user;
+    }
+
+    currentRole = role;
+    localStorage.setItem('email', email);
+    localStorage.setItem('role', role);
+
+    await loadFretes();
+    renderApp();
+    
+  } catch (err) {
+    console.error('Erro login:', err);
+    showError('Erro ao fazer login: ' + err.message);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Entrar';
+}
+
+function showError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+// LOGOUT
+async function logout() {
+  await db.auth.signOut();
+  currentUser = null;
+  currentRole = null;
+  localStorage.clear();
+  
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+// CARREGAR FRETES DO SUPABASE
+async function loadFretes() {
+  try {
+    const { data, error } = await db.from('tratativas').select('*');
+    
+    if (error) {
+      console.error('Erro ao carregar:', error);
+      fretes = [];
+    } else {
+      fretes = data || [];
+    }
+  } catch (err) {
+    console.error('Erro:', err);
+    fretes = [];
+  }
+}
+
+// RENDER APP
+function renderApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'block';
+  document.getElementById('headerUser').textContent = `${currentRole} • ${currentUser.email}`;
+  
+  // Mostra só o nav do seu role
+  document.getElementById('navGerente').style.display = currentRole === 'gerente' ? 'flex' : 'none';
+  document.getElementById('navMotorista').style.display = currentRole === 'motorista' ? 'flex' : 'none';
+  document.getElementById('navCliente').style.display = currentRole === 'cliente' ? 'flex' : 'none';
+  
+  switchSection(currentRole);
+}
+
+function switchSection(role) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  
+  if (role === 'gerente') {
+    document.getElementById('gerenteSec').classList.add('active');
+    renderGerente();
+    document.getElementById('navGerente').classList.add('active');
+  } else if (role === 'motorista') {
+    document.getElementById('motoristaSec').classList.add('active');
+    renderMotorista();
+    document.getElementById('navMotorista').classList.add('active');
+  } else {
+    document.getElementById('clienteSec').classList.add('active');
+    renderCliente();
+    document.getElementById('navCliente').classList.add('active');
+  }
+}
+
+// GERENTE
+function renderGerente() {
+  const totalRec = fretes.filter(f => f.status === 'finalizado').reduce((a, f) => a + (f.valor || 0), 0);
+  const lucro = totalRec * 0.12;
+
+  document.getElementById('statTotalRec').textContent = 'R$ ' + totalRec.toFixed(0);
+  document.getElementById('statLucro').textContent = 'R$ ' + lucro.toFixed(0);
+
+  const html = fretes.map(f => `
+    <div class="list-item">
+      <div>
+        <div class="list-title">#${f.id} ${f.origem || ''} → ${f.destino || ''}</div>
+        <div class="list-sub">${f.data_criacao ? new Date(f.data_criacao).toLocaleDateString('pt-BR') : ''}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="list-val">R$ ${f.valor || 0}</div>
+        <span class="badge">${f.status || 'pendente'}</span>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('gerenteFretes').innerHTML = html || '<div style="text-align:center;color:var(--muted);padding:20px">Nenhum frete</div>';
+}
+
+// MOTORISTA
+function renderMotorista() {
+  const meusFrrete = fretes.filter(f => f.user_id === currentUser?.id);
+  const ganhos = meusFrrete.filter(f => f.status === 'finalizado').reduce((a, f) => a + ((f.valor || 0) * 0.88), 0);
+
+  document.getElementById('statGanhos').textContent = 'R$ ' + ganhos.toFixed(0);
+  document.getElementById('statFretesAceitos').textContent = meusFrrete.length;
+
+  const disponíveis = fretes.filter(f => !f.user_id || f.status === 'pendente');
+  const html = disponíveis.map(f => `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div class="list-title">${f.origem || ''} → ${f.destino || ''}</div>
+        </div>
+        <div class="list-val">R$ ${f.valor || 0}</div>
+      </div>
+      <button class="btn btn-primary" onclick="aceitarFrete(${f.id})">Aceitar</button>
+    </div>
+  `).join('');
+
+  document.getElementById('motoristafretesDisp').innerHTML = html || '<div style="text-align:center;color:var(--muted);padding:20px">Nenhum frete</div>';
+}
+
+async function aceitarFrete(id) {
+  try {
+    const { error } = await db.from('tratativas').update({
+      user_id: currentUser.id,
+      status: 'ativo'
+    }).eq('id', id);
+    
+    if (error) throw error;
+    
+    await loadFretes();
+    renderMotorista();
+    alert('✅ Frete aceito!');
+  } catch (err) {
+    alert('Erro: ' + err.message);
+  }
+}
+
+// CLIENTE
+function renderCliente() {
+  const meusPedidos = fretes.filter(f => f.cliente_id === currentUser?.id);
+  
+  const html = meusPedidos.map(f => `
+    <div class="list-item">
+      <div>
+        <div class="list-title">${f.origem || ''} → ${f.destino || ''}</div>
+        <div class="list-sub">${f.data_criacao ? new Date(f.data_criacao).toLocaleDateString('pt-BR') : ''}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="list-val">R$ ${f.valor || 0}</div>
+        <span class="badge">${f.status || 'pendente'}</span>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('clientePedidos').innerHTML = html || '<div style="text-align:center;color:var(--muted);padding:20px">Nenhum pedido</div>';
+}
+
+function calcularFrete() {
+  const origem = document.getElementById('clienteOrigem').value;
+  const destino = document.getElementById('clienteDestino').value;
+  const km = parseFloat(document.getElementById('clienteKm').value);
+
+  if (!origem || !destino || !km) {
+    alert('Preencha todos os campos');
+    return;
+  }
+
+  const custoComb = (km / 10) * 6.50;
+  const custoMaoObra = km * 1.50;
+  const custoBase = custoComb + custoMaoObra;
+  const margem = custoBase * 0.20;
+  const valorFinal = custoBase + margem;
+
+  const html = `
+    <div class="card" style="margin-top:16px;border-color:var(--orange)">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;color:var(--orange)">R$ ${Math.ceil(valorFinal)}</div>
+      </div>
+
+      <div class="list-item" style="background:transparent;border:none;padding:0;padding-bottom:6px">
+        <span style="color:var(--muted)">📍 Distância</span>
+        <span style="font-weight:600">${km}km</span>
+      </div>
+
+      <button class="btn btn-primary" onclick="confirmarPedido('${origem}','${destino}',${Math.ceil(valorFinal)})">Confirmar Pedido</button>
+    </div>
+  `;
+
+  document.getElementById('clienteResultado').innerHTML = html;
+}
+
+async function confirmarPedido(origem, destino, valor) {
+  try {
+    const { error } = await db.from('tratativas').insert({
+      cliente_id: currentUser.id,
+      cliente: currentUser.email,
+      origem: origem,
+      destino: destino,
+      valor: valor,
+      status: 'pendente',
+      tipo: 'frete',
+      data_criacao: new Date().toISOString()
+    });
+
+    if (error) throw error;
+
+    alert('✅ Pedido criado com sucesso!');
+    
+    document.getElementById('clienteOrigem').value = '';
+    document.getElementById('clienteDestino').value = '';
+    document.getElementById('clienteKm').value = '';
+    document.getElementById('clienteResultado').innerHTML = '';
+    
+    await loadFretes();
+    renderCliente();
+  } catch (err) {
+    alert('Erro: ' + err.message);
+  }
+}
+
+// INIT
+window.addEventListener('load', async () => {
+  const savedEmail = localStorage.getItem('email');
+  const savedRole = localStorage.getItem('role');
+  
+  if (savedEmail && savedRole) {
+    const { data, error } = await db.auth.getSession();
+    if (data.session) {
+      currentUser = data.session.user;
+      currentRole = savedRole;
+      await loadFretes();
+      renderApp();
+    }
+  }
+});
+</script>
+
+</body>
+</html>
